@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "type-check": "tsc --noEmit",
+    "check": "npm run type-check && echo '✅ Type check passed!'"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
