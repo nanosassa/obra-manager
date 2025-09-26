@@ -75,6 +75,17 @@ export async function POST(req: NextRequest) {
     // Convertir monto a Decimal
     gastoData.monto = parseFloat(gastoData.monto)
 
+    // Convertir fecha string a Date object
+    gastoData.fecha = new Date(gastoData.fecha)
+
+    // Limpiar campos UUID opcionales - convertir strings vacíos a null
+    if (gastoData.proveedor_id === '') gastoData.proveedor_id = null
+    if (gastoData.metodo_pago_id === '') gastoData.metodo_pago_id = null
+    if (gastoData.pago_persona_id === '') gastoData.pago_persona_id = null
+    if (gastoData.presupuesto_id === '') gastoData.presupuesto_id = null
+    if (gastoData.numero_comprobante === '') gastoData.numero_comprobante = null
+    if (gastoData.notas === '') gastoData.notas = null
+
     // Si hay vinculaciones, validar que la suma sea igual al monto total
     if (vinculaciones && vinculaciones.length > 0) {
       const sumaVinculaciones = vinculaciones.reduce(
@@ -184,6 +195,19 @@ export async function PUT(req: NextRequest) {
     if (gastoData.monto) {
       gastoData.monto = parseFloat(gastoData.monto)
     }
+
+    // Convertir fecha si existe
+    if (gastoData.fecha) {
+      gastoData.fecha = new Date(gastoData.fecha)
+    }
+
+    // Limpiar campos UUID opcionales - convertir strings vacíos a null
+    if (gastoData.proveedor_id === '') gastoData.proveedor_id = null
+    if (gastoData.metodo_pago_id === '') gastoData.metodo_pago_id = null
+    if (gastoData.pago_persona_id === '') gastoData.pago_persona_id = null
+    if (gastoData.presupuesto_id === '') gastoData.presupuesto_id = null
+    if (gastoData.numero_comprobante === '') gastoData.numero_comprobante = null
+    if (gastoData.notas === '') gastoData.notas = null
 
     // Actualizar con transacción
     const result = await prisma.$transaction(async (tx) => {

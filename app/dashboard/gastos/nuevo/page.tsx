@@ -73,6 +73,9 @@ async function getFormData() {
   };
 }
 
+// Deshabilitar generación estática para páginas con DB
+export const dynamic = 'force-dynamic'
+
 export default async function NuevoGastoPage() {
   const data = await getFormData();
 

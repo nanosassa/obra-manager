@@ -8,7 +8,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border bg-white shadow-sm",
+        "rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow",
         className
       )}
       {...props}

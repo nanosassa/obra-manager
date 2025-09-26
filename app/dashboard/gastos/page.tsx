@@ -1,6 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { 
   Table,
   TableBody,
@@ -143,6 +146,9 @@ async function getFilterOptions() {
   return { categorias, personas, estados };
 }
 
+// Deshabilitar generación estática para páginas con DB
+export const dynamic = 'force-dynamic'
+
 export default async function GastosPage({
   searchParams
 }: {
@@ -237,13 +243,13 @@ export default async function GastosPage({
         <CardContent>
           <form className="flex flex-wrap gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="categoria">
                 Categoría
-              </label>
-              <select 
+              </Label>
+              <Select
+                id="categoria"
                 name="categoria"
                 defaultValue={searchParams.categoria as string || ''}
-                className="border rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Todas</option>
                 {filterOptions.categorias.map(cat => (
@@ -251,17 +257,17 @@ export default async function GastosPage({
                     {cat.nombre}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="persona">
                 Pagado por
-              </label>
-              <select 
+              </Label>
+              <Select
+                id="persona"
                 name="persona"
                 defaultValue={searchParams.persona as string || ''}
-                className="border rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Todos</option>
                 {filterOptions.personas.map(per => (
@@ -269,17 +275,17 @@ export default async function GastosPage({
                     {per.nombre}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="estado">
                 Estado
-              </label>
-              <select 
+              </Label>
+              <Select
+                id="estado"
                 name="estado"
                 defaultValue={searchParams.estado as string || ''}
-                className="border rounded-md px-3 py-2 text-sm"
               >
                 <option value="">Todos</option>
                 {filterOptions.estados.map(est => (
@@ -287,30 +293,30 @@ export default async function GastosPage({
                     {est.nombre}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="desde">
                 Desde
-              </label>
-              <input 
+              </Label>
+              <Input
+                id="desde"
                 type="date"
                 name="desde"
                 defaultValue={searchParams.desde as string || ''}
-                className="border rounded-md px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
+              <Label htmlFor="hasta">
                 Hasta
-              </label>
-              <input 
+              </Label>
+              <Input
+                id="hasta"
                 type="date"
                 name="hasta"
                 defaultValue={searchParams.hasta as string || ''}
-                className="border rounded-md px-3 py-2 text-sm"
               />
             </div>
 
@@ -333,7 +339,7 @@ export default async function GastosPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>

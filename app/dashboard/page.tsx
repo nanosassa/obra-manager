@@ -151,6 +151,9 @@ async function getDashboardData() {
   };
 }
 
+// Deshabilitar generación estática para páginas con DB
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
 

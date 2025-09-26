@@ -23,6 +23,7 @@ interface DatosCategoria {
   categoria: string
   total: number
   porcentaje: number
+  [key: string]: any
 }
 
 export function GastosPorCategoriaChart({ proyectoId }: GastosPorCategoriaChartProps) {
