@@ -51,7 +51,7 @@ export default function DashboardLayout({
                 <X className="h-6 w-6 text-white" />
               </button>
             </div>
-            <SidebarContent pathname={pathname} />
+            <SidebarContent pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
           </div>
         </div>
       )}
@@ -88,7 +88,7 @@ export default function DashboardLayout({
   )
 }
 
-function SidebarContent({ pathname }: { pathname: string }) {
+function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate?: () => void }) {
   return (
     <div className="flex flex-col flex-grow pt-6 overflow-y-auto bg-white shadow-lg border-r border-gray-200/60">
       <div className="flex items-center flex-shrink-0 px-6">
@@ -117,6 +117,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
                   isActive
                     ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-sm border-r-4 border-blue-600'
