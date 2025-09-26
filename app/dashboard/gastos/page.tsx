@@ -24,6 +24,7 @@ import {
 import Link from "next/link"
 import prisma from "@/lib/prisma"
 import { formatCurrency, formatDate, getEstadoBadgeVariant, getCategoriaBadgeVariant } from "@/lib/utils"
+import DeleteGastoButton from "@/components/DeleteGastoButton"
 
 async function getGastosData(searchParams: any) {
   // Obtener proyecto principal
@@ -422,9 +423,10 @@ export default async function GastosPage({
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DeleteGastoButton
+                            gastoId={gasto.id}
+                            gastoDescripcion={gasto.descripcion}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

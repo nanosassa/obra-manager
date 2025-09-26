@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
+import DeleteAvanceButton from "@/components/DeleteAvanceButton"
 
 interface Avance {
   id: string
@@ -114,9 +115,11 @@ export default function AvanceDetailPage() {
               Editar
             </Button>
           </Link>
-          <Button variant="outline" size="sm">
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <DeleteAvanceButton
+            avanceId={avance.id}
+            avanceDescripcion={avance.descripcion}
+            gastosCount={avance.gastos_count}
+          />
         </div>
       </div>
 

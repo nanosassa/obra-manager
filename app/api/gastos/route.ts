@@ -273,18 +273,28 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
-    // Soft delete
-    const gasto = await prisma.gastos.update({
-      where: { id },
-      data: {
-        deleted_at: new Date(),
-        updated_at: new Date()
-      }
+    // Usar transacción para eliminar gasto y sus vinculaciones
+    const result = await prisma.$transaction(async (tx) => {
+      // Primero eliminar todas las vinculaciones con avances
+      await tx.gastos_avances_obra.deleteMany({
+        where: { gasto_id: id }
+      })
+
+      // Luego hacer soft delete del gasto
+      const gasto = await tx.gastos.update({
+        where: { id },
+        data: {
+          deleted_at: new Date(),
+          updated_at: new Date()
+        }
+      })
+
+      return gasto
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Gasto eliminado correctamente'
+      message: 'Gasto y sus vinculaciones eliminados correctamente'
     })
   } catch (error) {
     console.error('Error al eliminar gasto:', error)

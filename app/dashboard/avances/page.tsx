@@ -21,6 +21,7 @@ import {
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 import prisma from '@/lib/prisma'
+import DeleteAvanceButton from "@/components/DeleteAvanceButton"
 
 async function getAvancesData() {
   try {
@@ -291,9 +292,11 @@ export default async function AvancesPage() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DeleteAvanceButton
+                            avanceId={avance.id}
+                            avanceDescripcion={avance.descripcion}
+                            gastosCount={avance.gastos_count}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
