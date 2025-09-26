@@ -22,6 +22,8 @@ interface Props {
   metodos: any[]
   avances: any[]
   estadoPagadoId?: string
+  initialData?: any
+  isEditing?: boolean
 }
 
 interface VinculacionAvance {
@@ -38,24 +40,32 @@ export default function NuevoGastoForm({
   estados,
   metodos,
   avances,
-  estadoPagadoId
+  estadoPagadoId,
+  initialData,
+  isEditing = false
 }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [vinculaciones, setVinculaciones] = useState<VinculacionAvance[]>([])
-  
+  const [vinculaciones, setVinculaciones] = useState<VinculacionAvance[]>(
+    initialData?.gastos_avances_obra?.map((gao: any) => ({
+      avance_obra_id: gao.avance_obra_id,
+      monto_asignado: gao.monto_asignado,
+      notas: gao.notas || ''
+    })) || []
+  )
+
   // Form data
   const [formData, setFormData] = useState({
-    fecha: new Date().toISOString().split('T')[0],
-    descripcion: '',
-    monto: '',
-    categoria_id: '',
-    proveedor_id: '',
-    pago_persona_id: '',
-    estado_id: estadoPagadoId || '',
-    metodo_pago_id: '',
-    numero_comprobante: '',
-    notas: ''
+    fecha: initialData?.fecha || new Date().toISOString().split('T')[0],
+    descripcion: initialData?.descripcion || '',
+    monto: initialData?.monto?.toString() || '',
+    categoria_id: initialData?.categoria_gasto_id || '',
+    proveedor_id: initialData?.proveedor_id || '',
+    pago_persona_id: initialData?.pago_persona_id || '',
+    estado_id: initialData?.estado_pago_id || estadoPagadoId || '',
+    metodo_pago_id: initialData?.metodo_pago_id || '',
+    numero_comprobante: initialData?.numero_comprobante || '',
+    notas: initialData?.notas || ''
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -103,14 +113,19 @@ export default function NuevoGastoForm({
     setLoading(true)
 
     try {
-      const response = await fetch('/api/gastos', {
-        method: 'POST',
+      const url = isEditing ? '/api/gastos' : '/api/gastos'
+      const method = isEditing ? 'PUT' : 'POST'
+      const body = isEditing
+        ? { ...formData, id: initialData.id, vinculaciones }
+        : { ...formData, vinculaciones }
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          ...body,
           proyecto_obra_id: proyecto.id,
           monto: parseFloat(formData.monto),
-          vinculaciones: vinculaciones.length > 0 ? vinculaciones : undefined
         })
       })
 

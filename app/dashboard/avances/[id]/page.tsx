@@ -9,6 +9,8 @@ import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 import DeleteAvanceButton from "@/components/DeleteAvanceButton"
+import VincularGastoButton from "@/components/VincularGastoButton"
+import DesvincularGastoButton from "@/components/DesvincularGastoButton"
 
 interface Avance {
   id: string
@@ -237,10 +239,10 @@ export default function AvanceDetailPage() {
                 {avance.gastos_count} gastos asociados a este avance
               </CardDescription>
             </div>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Vincular Gasto
-            </Button>
+            <VincularGastoButton
+              avanceId={avance.id}
+              onVinculado={() => window.location.reload()}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -252,17 +254,30 @@ export default function AvanceDetailPage() {
             <div className="space-y-3">
               {avance.gastos_avances_obra.map((gao: any) => (
                 <div key={gao.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{gao.gastos?.descripcion || 'Gasto eliminado'}</p>
                     <p className="text-sm text-gray-500">
                       {gao.gastos?.fecha ? new Date(gao.gastos.fecha).toLocaleDateString('es-AR') : ''}
                     </p>
+                    {gao.notas && (
+                      <p className="text-xs text-gray-600 mt-1 italic">{gao.notas}</p>
+                    )}
                   </div>
-                  <div className="text-right">
+                  <div className="text-right mr-3">
                     <p className="font-semibold">{formatCurrency(gao.monto_asignado)}</p>
                     <p className="text-xs text-gray-500">
                       de {gao.gastos?.monto ? formatCurrency(gao.gastos.monto) : 'N/A'}
                     </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    {gao.gastos && (
+                      <DesvincularGastoButton
+                        vinculacionId={gao.id}
+                        gastoDescripcion={gao.gastos.descripcion}
+                        montoAsignado={gao.monto_asignado}
+                        onDesvinculado={() => window.location.reload()}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
