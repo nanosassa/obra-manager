@@ -1,0 +1,29 @@
+name: Deploy to EasyPanel
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # Permite ejecutar manualmente
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Trigger EasyPanel Deploy
+      run: |
+        echo "🚀 Triggering deployment to EasyPanel..."
+        curl -X POST "${{ secrets.EASYPANEL_WEBHOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{"ref": "${{ github.ref }}", "commit": "${{ github.sha }}"}'
+        echo "✅ Deploy webhook sent successfully!"
+
+    - name: Deployment Status
+      run: |
+        echo "🎉 Deployment triggered!"
+        echo "📦 Commit: ${{ github.sha }}"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "👤 Author: ${{ github.actor }}"
