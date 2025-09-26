@@ -38,21 +38,28 @@ async function getDashboardData() {
     }
   });
 
-  const montoTotal = await prisma.gastos.aggregate({
+  // Gastos pagados
+  const estadoPagado = await prisma.estados_pago.findFirst({
+    where: {
+      nombre: {
+        contains: "PAGADO",
+        mode: "insensitive"
+      }
+    }
+  });
+
+  const montoTotalPagado = await prisma.gastos.aggregate({
     _sum: {
       monto: true
     },
     where: {
       proyecto_obra_id: proyecto.id,
+      estado_id: estadoPagado?.id,
       deleted_at: null
     }
   });
 
-  // Gastos pendientes
-  const estadoPendiente = await prisma.estados_pago.findFirst({
-    where: { nombre: "PENDIENTE" }
-  });
-
+  // Gastos pendientes (todos los que NO sean pagados)
   const gastosPendientes = await prisma.gastos.aggregate({
     _sum: {
       monto: true
@@ -62,13 +69,25 @@ async function getDashboardData() {
     },
     where: {
       proyecto_obra_id: proyecto.id,
-      estado_id: estadoPendiente?.id,
+      deleted_at: null,
+      NOT: {
+        estado_id: estadoPagado?.id
+      }
+    }
+  });
+
+  // Avances de obra y presupuesto total
+  const avances = await prisma.avances_obra.count({
+    where: {
+      proyecto_obra_id: proyecto.id,
       deleted_at: null
     }
   });
 
-  // Avances de obra
-  const avances = await prisma.avances_obra.count({
+  const presupuestoAvances = await prisma.avances_obra.aggregate({
+    _sum: {
+      monto_presupuestado: true
+    },
     where: {
       proyecto_obra_id: proyecto.id,
       deleted_at: null
@@ -135,11 +154,12 @@ async function getDashboardData() {
   return {
     proyecto: {
       ...proyecto,
-      presupuesto_total: proyecto.presupuesto_total ? Number(proyecto.presupuesto_total) : null
+      presupuesto_total: proyecto.presupuesto_total ? Number(proyecto.presupuesto_total) : null,
+      presupuesto_avances: Number(presupuestoAvances._sum.monto_presupuestado || 0)
     },
     stats: {
       totalGastos,
-      montoTotal: Number(montoTotal._sum.monto || 0),
+      montoPagado: Number(montoTotalPagado._sum.monto || 0),
       gastosPendientes: {
         cantidad: gastosPendientes._count.id,
         monto: Number(gastosPendientes._sum.monto || 0)
@@ -172,9 +192,9 @@ export default async function DashboardPage() {
   }
 
   const { proyecto, stats, ultimosGastos, gastosPorPersona } = data;
-  const presupuestoTotal = proyecto.presupuesto_total;
-  const porcentajeEjecutado = presupuestoTotal 
-    ? (stats.montoTotal / presupuestoTotal) * 100 
+  const presupuestoTotal = proyecto.presupuesto_avances || proyecto.presupuesto_total;
+  const porcentajeEjecutado = presupuestoTotal
+    ? (stats.montoPagado / presupuestoTotal) * 100
     : 0;
 
   return (
@@ -191,12 +211,12 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gastado</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
             <DollarSign className="h-4 w-4 text-gray-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(stats.montoTotal)}
+              {formatCurrency(stats.montoPagado)}
             </div>
             <p className="text-xs text-gray-500">
               {stats.totalGastos} gastos registrados
@@ -283,7 +303,7 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PagosPorPersona datos={gastosPorPersona} montoTotal={stats.montoTotal} />
+            <PagosPorPersona datos={gastosPorPersona} montoTotal={stats.montoPagado} />
           </CardContent>
         </Card>
       </div>

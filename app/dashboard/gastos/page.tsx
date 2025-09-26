@@ -153,10 +153,11 @@ export const dynamic = 'force-dynamic'
 export default async function GastosPage({
   searchParams
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const resolvedSearchParams = await searchParams
   const [data, filterOptions] = await Promise.all([
-    getGastosData(searchParams),
+    getGastosData(resolvedSearchParams),
     getFilterOptions()
   ]);
 
@@ -250,7 +251,7 @@ export default async function GastosPage({
               <Select
                 id="categoria"
                 name="categoria"
-                defaultValue={searchParams.categoria as string || ''}
+                defaultValue={resolvedSearchParams.categoria as string || ''}
               >
                 <option value="">Todas</option>
                 {filterOptions.categorias.map(cat => (
@@ -268,7 +269,7 @@ export default async function GastosPage({
               <Select
                 id="persona"
                 name="persona"
-                defaultValue={searchParams.persona as string || ''}
+                defaultValue={resolvedSearchParams.persona as string || ''}
               >
                 <option value="">Todos</option>
                 {filterOptions.personas.map(per => (
@@ -286,7 +287,7 @@ export default async function GastosPage({
               <Select
                 id="estado"
                 name="estado"
-                defaultValue={searchParams.estado as string || ''}
+                defaultValue={resolvedSearchParams.estado as string || ''}
               >
                 <option value="">Todos</option>
                 {filterOptions.estados.map(est => (
@@ -305,7 +306,7 @@ export default async function GastosPage({
                 id="desde"
                 type="date"
                 name="desde"
-                defaultValue={searchParams.desde as string || ''}
+                defaultValue={resolvedSearchParams.desde as string || ''}
               />
             </div>
 
@@ -317,7 +318,7 @@ export default async function GastosPage({
                 id="hasta"
                 type="date"
                 name="hasta"
-                defaultValue={searchParams.hasta as string || ''}
+                defaultValue={resolvedSearchParams.hasta as string || ''}
               />
             </div>
 

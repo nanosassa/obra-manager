@@ -53,6 +53,10 @@ export default function NuevoGastoForm({
       notas: gao.notas || ''
     })) || []
   )
+  const [proveedoresList, setProveedoresList] = useState(proveedores)
+  const [nuevoProveedor, setNuevoProveedor] = useState('')
+  const [creandoProveedor, setCreandoProveedor] = useState(false)
+  const [mostrarFormProveedor, setMostrarFormProveedor] = useState(false)
 
   // Form data
   const [formData, setFormData] = useState({
@@ -91,6 +95,36 @@ export default function NuevoGastoForm({
       updated[index] = { ...updated[index], [field]: value }
       return updated
     })
+  }
+
+  const crearProveedor = async () => {
+    if (!nuevoProveedor.trim()) return
+
+    setCreandoProveedor(true)
+    try {
+      const response = await fetch('/api/proveedores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevoProveedor.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevoProveedorData = await response.json()
+        setProveedoresList(prev => [...prev, nuevoProveedorData])
+        setFormData(prev => ({ ...prev, proveedor_id: nuevoProveedorData.id }))
+        setNuevoProveedor('')
+        setMostrarFormProveedor(false)
+      } else {
+        alert('Error al crear el proveedor')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear el proveedor')
+    } finally {
+      setCreandoProveedor(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,19 +254,75 @@ export default function NuevoGastoForm({
 
             <div>
               <Label htmlFor="proveedor_id">Proveedor</Label>
-              <Select
-                id="proveedor_id"
-                name="proveedor_id"
-                value={formData.proveedor_id}
-                onChange={handleInputChange}
-              >
-                <option value="">Sin proveedor</option>
-                {proveedores.map(prov => (
-                  <option key={prov.id} value={prov.id}>
-                    {prov.nombre}
-                  </option>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Select
+                  id="proveedor_id"
+                  name="proveedor_id"
+                  value={formData.proveedor_id}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Sin proveedor</option>
+                  {proveedoresList.map(prov => (
+                    <option key={prov.id} value={prov.id}>
+                      {prov.nombre}
+                    </option>
+                  ))}
+                </Select>
+
+                {!mostrarFormProveedor ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarFormProveedor(true)}
+                    className="w-full text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Crear nuevo proveedor
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nombre del proveedor"
+                      value={nuevoProveedor}
+                      onChange={(e) => setNuevoProveedor(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          crearProveedor()
+                        }
+                        if (e.key === 'Escape') {
+                          setMostrarFormProveedor(false)
+                          setNuevoProveedor('')
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={crearProveedor}
+                        disabled={creandoProveedor || !nuevoProveedor.trim()}
+                        className="flex-1"
+                      >
+                        {creandoProveedor && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                        Crear
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMostrarFormProveedor(false)
+                          setNuevoProveedor('')
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
