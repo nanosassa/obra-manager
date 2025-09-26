@@ -4,10 +4,10 @@ import prisma from '@/lib/prisma'
 // GET - Obtener un avance específico
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const avanceId = params.id
+    const { id: avanceId } = await params
 
     const avance = await prisma.avances_obra.findFirst({
       where: {

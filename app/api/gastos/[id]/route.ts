@@ -4,10 +4,10 @@ import prisma from '@/lib/prisma'
 // GET - Obtener un gasto específico
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const gastoId = params.id
+    const { id: gastoId } = await params
 
     const gasto = await prisma.gastos.findFirst({
       where: {
