@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Plus } from "lucide-react"
+import { Loader2 } from '@/components/ui/spinner'
 import Link from "next/link"
 
 interface FormData {
@@ -17,11 +18,11 @@ interface FormData {
   fecha: string
   numero_comprobante: string
   notas: string
-  categoria_gasto_id: string
+  categoria_id: string
   proveedor_id: string
   pago_persona_id: string
   metodo_pago_id: string
-  estado_pago_id: string
+  estado_id: string
 }
 
 export default function EditarGastoPage() {
@@ -31,11 +32,14 @@ export default function EditarGastoPage() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [categorias, setCategorias] = useState([])
-  const [proveedores, setProveedores] = useState([])
-  const [personas, setPersonas] = useState([])
-  const [metodos, setMetodos] = useState([])
-  const [estados, setEstados] = useState([])
+  const [categorias, setCategorias] = useState<any[]>([])
+  const [proveedores, setProveedores] = useState<any[]>([])
+  const [personas, setPersonas] = useState<any[]>([])
+  const [metodos, setMetodos] = useState<any[]>([])
+  const [estados, setEstados] = useState<any[]>([])
+  const [nuevoProveedor, setNuevoProveedor] = useState('')
+  const [creandoProveedor, setCreandoProveedor] = useState(false)
+  const [mostrarFormProveedor, setMostrarFormProveedor] = useState(false)
 
   const [formData, setFormData] = useState<FormData>({
     descripcion: '',
@@ -43,11 +47,11 @@ export default function EditarGastoPage() {
     fecha: '',
     numero_comprobante: '',
     notas: '',
-    categoria_gasto_id: '',
+    categoria_id: '',
     proveedor_id: '',
     pago_persona_id: '',
     metodo_pago_id: '',
-    estado_pago_id: ''
+    estado_id: ''
   })
 
   useEffect(() => {
@@ -79,11 +83,11 @@ export default function EditarGastoPage() {
           fecha: gasto.fecha.split('T')[0],
           numero_comprobante: gasto.numero_comprobante || '',
           notas: gasto.notas || '',
-          categoria_gasto_id: gasto.categorias_gasto.id,
-          proveedor_id: gasto.proveedores?.id || '',
-          pago_persona_id: gasto.personas?.id || '',
-          metodo_pago_id: gasto.metodos_pago.id,
-          estado_pago_id: gasto.estados_pago.id
+          categoria_id: gasto.categoria_id,
+          proveedor_id: gasto.proveedor_id || '',
+          pago_persona_id: gasto.pago_persona_id || '',
+          metodo_pago_id: gasto.metodo_pago_id || '',
+          estado_id: gasto.estado_id
         })
       } catch (error) {
         console.error('Error:', error)
@@ -105,6 +109,36 @@ export default function EditarGastoPage() {
       ...prev,
       [name]: value
     }))
+  }
+
+  const crearProveedor = async () => {
+    if (!nuevoProveedor.trim()) return
+
+    setCreandoProveedor(true)
+    try {
+      const response = await fetch('/api/proveedores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevoProveedor.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevoProveedorData = await response.json()
+        setProveedores(prev => [...prev, nuevoProveedorData])
+        setFormData(prev => ({ ...prev, proveedor_id: nuevoProveedorData.id }))
+        setNuevoProveedor('')
+        setMostrarFormProveedor(false)
+      } else {
+        alert('Error al crear el proveedor')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear el proveedor')
+    } finally {
+      setCreandoProveedor(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -242,11 +276,11 @@ export default function EditarGastoPage() {
               </div>
 
               <div>
-                <Label htmlFor="categoria_gasto_id">Categoría *</Label>
+                <Label htmlFor="categoria_id">Categoría *</Label>
                 <Select
-                  id="categoria_gasto_id"
-                  name="categoria_gasto_id"
-                  value={formData.categoria_gasto_id}
+                  id="categoria_id"
+                  name="categoria_id"
+                  value={formData.categoria_id}
                   onChange={handleChange}
                   required
                 >
@@ -261,19 +295,75 @@ export default function EditarGastoPage() {
 
               <div>
                 <Label htmlFor="proveedor_id">Proveedor</Label>
-                <Select
-                  id="proveedor_id"
-                  name="proveedor_id"
-                  value={formData.proveedor_id}
-                  onChange={handleChange}
-                >
-                  <option value="">Sin proveedor</option>
-                  {proveedores.map((prov: any) => (
-                    <option key={prov.id} value={prov.id}>
-                      {prov.nombre}
-                    </option>
-                  ))}
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    id="proveedor_id"
+                    name="proveedor_id"
+                    value={formData.proveedor_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">Sin proveedor</option>
+                    {proveedores.map((prov: any) => (
+                      <option key={prov.id} value={prov.id}>
+                        {prov.nombre}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {!mostrarFormProveedor ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMostrarFormProveedor(true)}
+                      className="w-full text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Crear nuevo proveedor
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nombre del proveedor"
+                        value={nuevoProveedor}
+                        onChange={(e) => setNuevoProveedor(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            crearProveedor()
+                          }
+                          if (e.key === 'Escape') {
+                            setMostrarFormProveedor(false)
+                            setNuevoProveedor('')
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={crearProveedor}
+                          disabled={creandoProveedor || !nuevoProveedor.trim()}
+                          className="flex-1"
+                        >
+                          {creandoProveedor && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                          Crear
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMostrarFormProveedor(false)
+                            setNuevoProveedor('')
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -313,11 +403,11 @@ export default function EditarGastoPage() {
               </div>
 
               <div>
-                <Label htmlFor="estado_pago_id">Estado de Pago *</Label>
+                <Label htmlFor="estado_id">Estado de Pago *</Label>
                 <Select
-                  id="estado_pago_id"
-                  name="estado_pago_id"
-                  value={formData.estado_pago_id}
+                  id="estado_id"
+                  name="estado_id"
+                  value={formData.estado_id}
                   onChange={handleChange}
                   required
                 >
