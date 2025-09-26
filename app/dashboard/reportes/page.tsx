@@ -109,7 +109,12 @@ async function getReportesData() {
       return acc
     }, {})
 
-    const categorias = Object.values(gastosPorCategoria)
+    const categorias = Object.values(gastosPorCategoria) as Array<{
+      nombre: string
+      total: number
+      count: number
+      color: string
+    }>
 
     return {
       proyecto,
