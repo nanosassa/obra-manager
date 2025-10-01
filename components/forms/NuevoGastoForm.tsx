@@ -58,6 +58,24 @@ export default function NuevoGastoForm({
   const [creandoProveedor, setCreandoProveedor] = useState(false)
   const [mostrarFormProveedor, setMostrarFormProveedor] = useState(false)
 
+  // Estados para categorías
+  const [categoriasList, setCategoriasList] = useState(categorias)
+  const [nuevaCategoria, setNuevaCategoria] = useState('')
+  const [creandoCategoria, setCreandoCategoria] = useState(false)
+  const [mostrarFormCategoria, setMostrarFormCategoria] = useState(false)
+
+  // Estados para personas
+  const [personasList, setPersonasList] = useState(personas)
+  const [nuevaPersona, setNuevaPersona] = useState('')
+  const [creandoPersona, setCreandoPersona] = useState(false)
+  const [mostrarFormPersona, setMostrarFormPersona] = useState(false)
+
+  // Estados para métodos de pago
+  const [metodosList, setMetodosList] = useState(metodos)
+  const [nuevoMetodo, setNuevoMetodo] = useState('')
+  const [creandoMetodo, setCreandoMetodo] = useState(false)
+  const [mostrarFormMetodo, setMostrarFormMetodo] = useState(false)
+
   // Form data
   const [formData, setFormData] = useState({
     fecha: initialData?.fecha || new Date().toISOString().split('T')[0],
@@ -124,6 +142,96 @@ export default function NuevoGastoForm({
       alert('Error al crear el proveedor')
     } finally {
       setCreandoProveedor(false)
+    }
+  }
+
+  const crearCategoria = async () => {
+    if (!nuevaCategoria.trim()) return
+
+    setCreandoCategoria(true)
+    try {
+      const response = await fetch('/api/categorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevaCategoria.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevaCategoriaData = await response.json()
+        setCategoriasList(prev => [...prev, nuevaCategoriaData])
+        setFormData(prev => ({ ...prev, categoria_id: nuevaCategoriaData.id }))
+        setNuevaCategoria('')
+        setMostrarFormCategoria(false)
+      } else {
+        alert('Error al crear la categoría')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear la categoría')
+    } finally {
+      setCreandoCategoria(false)
+    }
+  }
+
+  const crearPersona = async () => {
+    if (!nuevaPersona.trim()) return
+
+    setCreandoPersona(true)
+    try {
+      const response = await fetch('/api/personas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevaPersona.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevaPersonaData = await response.json()
+        setPersonasList(prev => [...prev, nuevaPersonaData])
+        setFormData(prev => ({ ...prev, pago_persona_id: nuevaPersonaData.id }))
+        setNuevaPersona('')
+        setMostrarFormPersona(false)
+      } else {
+        alert('Error al crear la persona')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear la persona')
+    } finally {
+      setCreandoPersona(false)
+    }
+  }
+
+  const crearMetodo = async () => {
+    if (!nuevoMetodo.trim()) return
+
+    setCreandoMetodo(true)
+    try {
+      const response = await fetch('/api/metodos-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevoMetodo.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevoMetodoData = await response.json()
+        setMetodosList(prev => [...prev, nuevoMetodoData])
+        setFormData(prev => ({ ...prev, metodo_pago_id: nuevoMetodoData.id }))
+        setNuevoMetodo('')
+        setMostrarFormMetodo(false)
+      } else {
+        alert('Error al crear el método de pago')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear el método de pago')
+    } finally {
+      setCreandoMetodo(false)
     }
   }
 
@@ -236,20 +344,76 @@ export default function NuevoGastoForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="categoria_id">Categoría *</Label>
-              <Select
-                id="categoria_id"
-                name="categoria_id"
-                value={formData.categoria_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Seleccione...</option>
-                {categorias.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Select
+                  id="categoria_id"
+                  name="categoria_id"
+                  value={formData.categoria_id}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Seleccione...</option>
+                  {categoriasList.map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nombre}
+                    </option>
+                  ))}
+                </Select>
+
+                {!mostrarFormCategoria ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarFormCategoria(true)}
+                    className="w-full text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Crear nueva categoría
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nombre de la categoría"
+                      value={nuevaCategoria}
+                      onChange={(e) => setNuevaCategoria(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          crearCategoria()
+                        }
+                        if (e.key === 'Escape') {
+                          setMostrarFormCategoria(false)
+                          setNuevaCategoria('')
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={crearCategoria}
+                        disabled={creandoCategoria || !nuevaCategoria.trim()}
+                        className="flex-1"
+                      >
+                        {creandoCategoria && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                        Crear
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMostrarFormCategoria(false)
+                          setNuevaCategoria('')
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -329,37 +493,149 @@ export default function NuevoGastoForm({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="pago_persona_id">Pagado por *</Label>
-              <Select
-                id="pago_persona_id"
-                name="pago_persona_id"
-                value={formData.pago_persona_id}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Seleccione...</option>
-                {personas.map(per => (
-                  <option key={per.id} value={per.id}>
-                    {per.nombre}
-                  </option>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Select
+                  id="pago_persona_id"
+                  name="pago_persona_id"
+                  value={formData.pago_persona_id}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Seleccione...</option>
+                  {personasList.map(per => (
+                    <option key={per.id} value={per.id}>
+                      {per.nombre}
+                    </option>
+                  ))}
+                </Select>
+
+                {!mostrarFormPersona ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarFormPersona(true)}
+                    className="w-full text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Crear nueva persona
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nombre de la persona"
+                      value={nuevaPersona}
+                      onChange={(e) => setNuevaPersona(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          crearPersona()
+                        }
+                        if (e.key === 'Escape') {
+                          setMostrarFormPersona(false)
+                          setNuevaPersona('')
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={crearPersona}
+                        disabled={creandoPersona || !nuevaPersona.trim()}
+                        className="flex-1"
+                      >
+                        {creandoPersona && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                        Crear
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMostrarFormPersona(false)
+                          setNuevaPersona('')
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
               <Label htmlFor="metodo_pago_id">Método de pago</Label>
-              <Select
-                id="metodo_pago_id"
-                name="metodo_pago_id"
-                value={formData.metodo_pago_id}
-                onChange={handleInputChange}
-              >
-                <option value="">Sin especificar</option>
-                {metodos.map(met => (
-                  <option key={met.id} value={met.id}>
-                    {met.nombre}
-                  </option>
-                ))}
-              </Select>
+              <div className="space-y-2">
+                <Select
+                  id="metodo_pago_id"
+                  name="metodo_pago_id"
+                  value={formData.metodo_pago_id}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Sin especificar</option>
+                  {metodosList.map(met => (
+                    <option key={met.id} value={met.id}>
+                      {met.nombre}
+                    </option>
+                  ))}
+                </Select>
+
+                {!mostrarFormMetodo ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarFormMetodo(true)}
+                    className="w-full text-xs"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Crear nuevo método
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nombre del método de pago"
+                      value={nuevoMetodo}
+                      onChange={(e) => setNuevoMetodo(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          crearMetodo()
+                        }
+                        if (e.key === 'Escape') {
+                          setMostrarFormMetodo(false)
+                          setNuevoMetodo('')
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={crearMetodo}
+                        disabled={creandoMetodo || !nuevoMetodo.trim()}
+                        className="flex-1"
+                      >
+                        {creandoMetodo && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                        Crear
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMostrarFormMetodo(false)
+                          setNuevoMetodo('')
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

@@ -41,6 +41,21 @@ export default function EditarGastoPage() {
   const [creandoProveedor, setCreandoProveedor] = useState(false)
   const [mostrarFormProveedor, setMostrarFormProveedor] = useState(false)
 
+  // Estados para categorías
+  const [nuevaCategoria, setNuevaCategoria] = useState('')
+  const [creandoCategoria, setCreandoCategoria] = useState(false)
+  const [mostrarFormCategoria, setMostrarFormCategoria] = useState(false)
+
+  // Estados para personas
+  const [nuevaPersona, setNuevaPersona] = useState('')
+  const [creandoPersona, setCreandoPersona] = useState(false)
+  const [mostrarFormPersona, setMostrarFormPersona] = useState(false)
+
+  // Estados para métodos de pago
+  const [nuevoMetodo, setNuevoMetodo] = useState('')
+  const [creandoMetodo, setCreandoMetodo] = useState(false)
+  const [mostrarFormMetodo, setMostrarFormMetodo] = useState(false)
+
   const [formData, setFormData] = useState<FormData>({
     descripcion: '',
     monto: '',
@@ -138,6 +153,96 @@ export default function EditarGastoPage() {
       alert('Error al crear el proveedor')
     } finally {
       setCreandoProveedor(false)
+    }
+  }
+
+  const crearCategoria = async () => {
+    if (!nuevaCategoria.trim()) return
+
+    setCreandoCategoria(true)
+    try {
+      const response = await fetch('/api/categorias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevaCategoria.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevaCategoriaData = await response.json()
+        setCategorias(prev => [...prev, nuevaCategoriaData])
+        setFormData(prev => ({ ...prev, categoria_id: nuevaCategoriaData.id }))
+        setNuevaCategoria('')
+        setMostrarFormCategoria(false)
+      } else {
+        alert('Error al crear la categoría')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear la categoría')
+    } finally {
+      setCreandoCategoria(false)
+    }
+  }
+
+  const crearPersona = async () => {
+    if (!nuevaPersona.trim()) return
+
+    setCreandoPersona(true)
+    try {
+      const response = await fetch('/api/personas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevaPersona.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevaPersonaData = await response.json()
+        setPersonas(prev => [...prev, nuevaPersonaData])
+        setFormData(prev => ({ ...prev, pago_persona_id: nuevaPersonaData.id }))
+        setNuevaPersona('')
+        setMostrarFormPersona(false)
+      } else {
+        alert('Error al crear la persona')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear la persona')
+    } finally {
+      setCreandoPersona(false)
+    }
+  }
+
+  const crearMetodo = async () => {
+    if (!nuevoMetodo.trim()) return
+
+    setCreandoMetodo(true)
+    try {
+      const response = await fetch('/api/metodos-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nuevoMetodo.trim()
+        })
+      })
+
+      if (response.ok) {
+        const nuevoMetodoData = await response.json()
+        setMetodos(prev => [...prev, nuevoMetodoData])
+        setFormData(prev => ({ ...prev, metodo_pago_id: nuevoMetodoData.id }))
+        setNuevoMetodo('')
+        setMostrarFormMetodo(false)
+      } else {
+        alert('Error al crear el método de pago')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al crear el método de pago')
+    } finally {
+      setCreandoMetodo(false)
     }
   }
 
@@ -277,20 +382,76 @@ export default function EditarGastoPage() {
 
               <div>
                 <Label htmlFor="categoria_id">Categoría *</Label>
-                <Select
-                  id="categoria_id"
-                  name="categoria_id"
-                  value={formData.categoria_id}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione una categoría</option>
-                  {categorias.map((cat: any) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    id="categoria_id"
+                    name="categoria_id"
+                    value={formData.categoria_id}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una categoría</option>
+                    {categorias.map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {!mostrarFormCategoria ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMostrarFormCategoria(true)}
+                      className="w-full text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Crear nueva categoría
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nombre de la categoría"
+                        value={nuevaCategoria}
+                        onChange={(e) => setNuevaCategoria(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            crearCategoria()
+                          }
+                          if (e.key === 'Escape') {
+                            setMostrarFormCategoria(false)
+                            setNuevaCategoria('')
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={crearCategoria}
+                          disabled={creandoCategoria || !nuevaCategoria.trim()}
+                          className="flex-1"
+                        >
+                          {creandoCategoria && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                          Crear
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMostrarFormCategoria(false)
+                            setNuevaCategoria('')
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -368,38 +529,149 @@ export default function EditarGastoPage() {
 
               <div>
                 <Label htmlFor="pago_persona_id">Persona *</Label>
-                <Select
-                  id="pago_persona_id"
-                  name="pago_persona_id"
-                  value={formData.pago_persona_id}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione una persona</option>
-                  {personas.map((persona: any) => (
-                    <option key={persona.id} value={persona.id}>
-                      {persona.nombre}
-                    </option>
-                  ))}
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    id="pago_persona_id"
+                    name="pago_persona_id"
+                    value={formData.pago_persona_id}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione una persona</option>
+                    {personas.map((persona: any) => (
+                      <option key={persona.id} value={persona.id}>
+                        {persona.nombre}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {!mostrarFormPersona ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMostrarFormPersona(true)}
+                      className="w-full text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Crear nueva persona
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nombre de la persona"
+                        value={nuevaPersona}
+                        onChange={(e) => setNuevaPersona(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            crearPersona()
+                          }
+                          if (e.key === 'Escape') {
+                            setMostrarFormPersona(false)
+                            setNuevaPersona('')
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={crearPersona}
+                          disabled={creandoPersona || !nuevaPersona.trim()}
+                          className="flex-1"
+                        >
+                          {creandoPersona && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                          Crear
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMostrarFormPersona(false)
+                            setNuevaPersona('')
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
-                <Label htmlFor="metodo_pago_id">Método de Pago *</Label>
-                <Select
-                  id="metodo_pago_id"
-                  name="metodo_pago_id"
-                  value={formData.metodo_pago_id}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione un método</option>
-                  {metodos.map((metodo: any) => (
-                    <option key={metodo.id} value={metodo.id}>
-                      {metodo.nombre}
-                    </option>
-                  ))}
-                </Select>
+                <Label htmlFor="metodo_pago_id">Método de Pago</Label>
+                <div className="space-y-2">
+                  <Select
+                    id="metodo_pago_id"
+                    name="metodo_pago_id"
+                    value={formData.metodo_pago_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">Seleccione un método</option>
+                    {metodos.map((metodo: any) => (
+                      <option key={metodo.id} value={metodo.id}>
+                        {metodo.nombre}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {!mostrarFormMetodo ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMostrarFormMetodo(true)}
+                      className="w-full text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Crear nuevo método
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nombre del método de pago"
+                        value={nuevoMetodo}
+                        onChange={(e) => setNuevoMetodo(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            crearMetodo()
+                          }
+                          if (e.key === 'Escape') {
+                            setMostrarFormMetodo(false)
+                            setNuevoMetodo('')
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={crearMetodo}
+                          disabled={creandoMetodo || !nuevoMetodo.trim()}
+                          className="flex-1"
+                        >
+                          {creandoMetodo && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                          Crear
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setMostrarFormMetodo(false)
+                            setNuevoMetodo('')
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
