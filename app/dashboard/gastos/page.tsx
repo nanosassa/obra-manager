@@ -187,9 +187,10 @@ export default async function GastosPage({
             Exportar
           </Button>
           <Link href="/dashboard/gastos/nuevo">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Gasto
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Nuevo Gasto</span>
+              <span className="sm:hidden">Nuevo</span>
             </Button>
           </Link>
         </div>

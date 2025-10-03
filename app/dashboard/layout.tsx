@@ -12,8 +12,10 @@ import {
   Users,
   Package,
   ChevronRight,
+  ChevronDown,
   Menu,
-  X
+  X,
+  Clock
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -21,7 +23,16 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Gastos', href: '/dashboard/gastos', icon: DollarSign },
   { name: 'Avances de Obra', href: '/dashboard/avances', icon: TrendingUp },
-  { name: 'Reportes', href: '/dashboard/reportes', icon: FileText },
+  {
+    name: 'Reportes',
+    href: '/dashboard/reportes',
+    icon: FileText,
+    submenu: [
+      { name: 'Resumen General', href: '/dashboard/reportes', icon: FileText },
+      { name: 'Por Categoría', href: '/dashboard/reportes/categorias', icon: FileText },
+      { name: 'Gastos Pendientes', href: '/dashboard/gastos/pendientes', icon: Clock },
+    ]
+  },
   { name: 'Proveedores', href: '/dashboard/proveedores', icon: Package },
   { name: 'Personas', href: '/dashboard/personas', icon: Users },
   { name: 'Configuración', href: '/dashboard/configuracion', icon: Settings },
@@ -89,6 +100,16 @@ export default function DashboardLayout({
 }
 
 function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate?: () => void }) {
+  const [openSubmenus, setOpenSubmenus] = useState<string[]>(['Reportes']) // Reportes abierto por defecto
+
+  const toggleSubmenu = (itemName: string) => {
+    setOpenSubmenus(prev =>
+      prev.includes(itemName)
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    )
+  }
+
   return (
     <div className="flex flex-col flex-grow pt-6 overflow-y-auto bg-white shadow-lg border-r border-gray-200/60">
       <div className="flex items-center flex-shrink-0 px-6">
@@ -110,32 +131,98 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
         <nav className="flex-1 px-4 space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href ||
-              (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            const hasSubmenu = 'submenu' in item
+            const isSubmenuOpen = openSubmenus.includes(item.name)
+
+            // Para items con submenu, verificar si algún submenu está activo
+            const isActive = hasSubmenu
+              ? item.submenu?.some(sub => pathname === sub.href || (sub.href !== '/dashboard' && pathname.startsWith(sub.href)))
+              : pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
 
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={onNavigate}
-                className={cn(
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-sm border-r-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50/80 hover:text-gray-900',
-                  'group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-out'
+              <div key={item.name}>
+                {hasSubmenu ? (
+                  <button
+                    onClick={() => toggleSubmenu(item.name)}
+                    className={cn(
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-sm border-r-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50/80 hover:text-gray-900',
+                      'w-full group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-out'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600',
+                        'mr-3 flex-shrink-0 h-5 w-5 transition-colors'
+                      )}
+                    />
+                    {item.name}
+                    <ChevronDown
+                      className={cn(
+                        'ml-auto h-4 w-4 transition-transform',
+                        isSubmenuOpen ? 'rotate-180' : '',
+                        isActive ? 'text-blue-600' : 'text-gray-400'
+                      )}
+                    />
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      isActive
+                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 shadow-sm border-r-4 border-blue-600'
+                        : 'text-gray-700 hover:bg-gray-50/80 hover:text-gray-900',
+                      'group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-out'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600',
+                        'mr-3 flex-shrink-0 h-5 w-5 transition-colors'
+                      )}
+                    />
+                    {item.name}
+                    {isActive && (
+                      <ChevronRight className="ml-auto h-4 w-4 text-blue-600" />
+                    )}
+                  </Link>
                 )}
-              >
-                <Icon
-                  className={cn(
-                    isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600',
-                    'mr-3 flex-shrink-0 h-5 w-5 transition-colors'
-                  )}
-                />
-                {item.name}
-                {isActive && (
-                  <ChevronRight className="ml-auto h-4 w-4 text-blue-600" />
+
+                {/* Submenu */}
+                {hasSubmenu && isSubmenuOpen && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {item.submenu?.map((subItem) => {
+                      const SubIcon = subItem.icon
+                      const isSubActive = pathname === subItem.href ||
+                        (subItem.href !== '/dashboard' && pathname.startsWith(subItem.href))
+
+                      return (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          onClick={onNavigate}
+                          className={cn(
+                            isSubActive
+                              ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                            'group flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ease-out'
+                          )}
+                        >
+                          <SubIcon
+                            className={cn(
+                              isSubActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600',
+                              'mr-3 flex-shrink-0 h-4 w-4 transition-colors'
+                            )}
+                          />
+                          {subItem.name}
+                        </Link>
+                      )
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             )
           })}
         </nav>

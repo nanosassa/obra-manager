@@ -272,8 +272,8 @@ export default function NuevoGastoForm({
       })
 
       if (response.ok) {
-        router.push('/dashboard/gastos')
         router.refresh()
+        router.push('/dashboard/gastos')
       } else {
         const error = await response.json()
         alert('Error al guardar: ' + (error.error || 'Error desconocido'))
@@ -774,18 +774,24 @@ export default function NuevoGastoForm({
       </Card>
 
       {/* Botones de acción */}
-      <div className="flex gap-4 justify-end">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:justify-end">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
           disabled={loading}
+          className="w-full sm:w-auto order-2 sm:order-1"
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full sm:w-auto order-1 sm:order-2"
+        >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Guardar Gasto
+          <span className="hidden sm:inline">Guardar Gasto</span>
+          <span className="sm:hidden">Guardar</span>
         </Button>
       </div>
     </form>

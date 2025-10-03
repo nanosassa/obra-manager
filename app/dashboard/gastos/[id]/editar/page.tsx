@@ -278,6 +278,7 @@ export default function EditarGastoPage() {
         throw new Error(errorData.error || 'Error al actualizar el gasto')
       }
 
+      router.refresh()
       router.push('/dashboard/gastos')
     } catch (error) {
       console.error('Error:', error)
@@ -718,16 +719,21 @@ export default function EditarGastoPage() {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </Button>
-              <Link href="/dashboard/gastos">
-                <Button type="button" variant="outline">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:justify-end">
+              <Link href="/dashboard/gastos" className="order-2 sm:order-1 w-full sm:w-auto">
+                <Button type="button" variant="outline" className="w-full">
                   Cancelar
                 </Button>
               </Link>
+              <Button
+                type="submit"
+                disabled={saving}
+                className="w-full sm:w-auto order-1 sm:order-2"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+                <span className="sm:hidden">{saving ? 'Guardando...' : 'Guardar'}</span>
+              </Button>
             </div>
           </form>
         </CardContent>
