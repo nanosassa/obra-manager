@@ -2,6 +2,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Table,
   TableBody,
   TableCell,
@@ -209,7 +215,7 @@ export default async function AvancesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Descripción</TableHead>
+                  <TableHead className="min-w-[250px]">Descripción</TableHead>
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Presupuesto</TableHead>
                   <TableHead>Gastado</TableHead>
@@ -229,14 +235,31 @@ export default async function AvancesPage() {
                   avances.map((avance: any) => (
                     <TableRow key={avance.id}>
                       <TableCell>
-                        <div className="max-w-[200px]">
-                          <p className="font-medium truncate">{avance.descripcion}</p>
-                          {avance.notas && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {avance.notas}
-                            </p>
-                          )}
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="min-w-[200px] cursor-help">
+                                <p className="font-medium">{avance.descripcion}</p>
+                                {avance.notas && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {avance.notas.length > 100
+                                      ? `${avance.notas.substring(0, 100)}...`
+                                      : avance.notas
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div>
+                                <p className="font-medium mb-1">{avance.descripcion}</p>
+                                {avance.notas && (
+                                  <p className="text-xs">{avance.notas}</p>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">

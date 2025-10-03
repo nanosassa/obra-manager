@@ -289,14 +289,16 @@ export default async function ReportesPage() {
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                Gastos por Período
+                Gastos por Categoría
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-gray-500 mb-3">Análisis mensual de gastos</p>
-              <Button size="sm" variant="outline" className="w-full">
-                Ver Reporte
-              </Button>
+              <p className="text-xs text-gray-500 mb-3">Análisis detallado por categoría</p>
+              <Link href="/dashboard/reportes/categorias">
+                <Button size="sm" variant="outline" className="w-full">
+                  Ver Reporte
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
