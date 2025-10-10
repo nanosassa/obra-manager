@@ -28,8 +28,10 @@ import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 import prisma from '@/lib/prisma'
 import DeleteAvanceButton from "@/components/DeleteAvanceButton"
+import AvancesFiltros from "@/components/AvancesFiltros"
+import ExportarAvancesPDF from "@/components/ExportarAvancesPDF"
 
-async function getAvancesData() {
+async function getAvancesData(searchParams: any) {
   try {
     // Obtener proyecto
     const proyecto = await prisma.proyectos_obra.findFirst({
@@ -40,15 +42,43 @@ async function getAvancesData() {
     });
 
     if (!proyecto) {
-      return { avances: [], proyecto: null }
+      return { avances: [], proyecto: null, proveedores: [] }
+    }
+
+    // Construir filtros
+    const where: any = {
+      proyecto_obra_id: proyecto.id,
+      deleted_at: null
+    }
+
+    if (searchParams.proveedor) {
+      where.proveedor = searchParams.proveedor
+    }
+
+    if (searchParams.busqueda) {
+      where.OR = [
+        { descripcion: { contains: searchParams.busqueda, mode: 'insensitive' } },
+        { notas: { contains: searchParams.busqueda, mode: 'insensitive' } }
+      ]
+    }
+
+    if (searchParams.presupuestoMin) {
+      where.monto_presupuestado = {
+        ...where.monto_presupuestado,
+        gte: parseFloat(searchParams.presupuestoMin)
+      }
+    }
+
+    if (searchParams.presupuestoMax) {
+      where.monto_presupuestado = {
+        ...where.monto_presupuestado,
+        lte: parseFloat(searchParams.presupuestoMax)
+      }
     }
 
     // Obtener avances con sus gastos
     const avances = await prisma.avances_obra.findMany({
-      where: {
-        proyecto_obra_id: proyecto.id,
-        deleted_at: null
-      },
+      where,
       include: {
         gastos_avances_obra: {
           include: {
@@ -69,7 +99,7 @@ async function getAvancesData() {
     })
 
     // Calcular totales y progreso
-    const avancesConProgreso = avances.map(avance => {
+    let avancesConProgreso = avances.map(avance => {
       const totalGastado = avance.gastos_avances_obra.reduce(
         (sum, gao) => sum + Number(gao.monto_asignado),
         0
@@ -81,14 +111,43 @@ async function getAvancesData() {
         : 0
 
       return {
-        ...avance,
+        id: avance.id,
+        descripcion: avance.descripcion,
+        proveedor: avance.proveedor,
+        notas: avance.notas,
+        created_at: avance.created_at,
+        updated_at: avance.updated_at,
         monto_presupuestado: presupuesto,
         porcentaje_avance: Number(avance.porcentaje_avance) || 0,
         total_gastado: totalGastado,
         porcentaje_gastado: porcentajeGastado,
-        gastos_count: avance.gastos_avances_obra.length
+        gastos_count: avance.gastos_avances_obra.length,
+        // Serializar gastos_avances_obra para componentes cliente
+        gastos_avances_obra: avance.gastos_avances_obra.map(gao => ({
+          id: gao.id,
+          monto_asignado: Number(gao.monto_asignado),
+          gastos: {
+            id: gao.gastos.id,
+            descripcion: gao.gastos.descripcion,
+            monto: Number(gao.gastos.monto),
+            fecha: gao.gastos.fecha
+          }
+        }))
       }
     })
+
+    // Filtrar por porcentaje de avance (client-side porque es calculado)
+    if (searchParams.avanceMin) {
+      const minAvance = parseFloat(searchParams.avanceMin)
+      avancesConProgreso = avancesConProgreso.filter(a => a.porcentaje_avance >= minAvance)
+    }
+    if (searchParams.avanceMax) {
+      const maxAvance = parseFloat(searchParams.avanceMax)
+      avancesConProgreso = avancesConProgreso.filter(a => a.porcentaje_avance <= maxAvance)
+    }
+
+    // Obtener lista única de proveedores
+    const proveedoresUnicos = [...new Set(avances.map(a => a.proveedor))].sort()
 
     return {
       avances: avancesConProgreso,
@@ -96,20 +155,26 @@ async function getAvancesData() {
         id: proyecto.id,
         nombre: proyecto.nombre,
         presupuesto_total: Number(proyecto.presupuesto_total) || 0
-      }
+      },
+      proveedores: proveedoresUnicos
     }
   } catch (error) {
     console.error('Error in getAvancesData:', error)
-    return { avances: [], proyecto: null }
+    return { avances: [], proyecto: null, proveedores: [] }
   }
 }
 
 // Deshabilitar generación estática para páginas con DB
 export const dynamic = 'force-dynamic'
 
-export default async function AvancesPage() {
-  const data = await getAvancesData()
-  const { avances, proyecto } = data
+export default async function AvancesPage({
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedSearchParams = await searchParams
+  const data = await getAvancesData(resolvedSearchParams)
+  const { avances, proyecto, proveedores } = data
 
   if (!proyecto) {
     return (
@@ -137,13 +202,23 @@ export default async function AvancesPage() {
             Seguimiento del progreso del proyecto
           </p>
         </div>
-        <Link href="/dashboard/avances/nuevo">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Avance
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <ExportarAvancesPDF
+            avances={avances}
+            proyecto={proyecto}
+            filtrosAplicados={resolvedSearchParams}
+          />
+          <Link href="/dashboard/avances/nuevo">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Avance
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Filtros */}
+      <AvancesFiltros proveedores={proveedores} />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
