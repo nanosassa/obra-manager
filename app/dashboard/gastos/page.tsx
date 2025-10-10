@@ -1,10 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Select } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,10 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { 
+import {
   Plus,
-  Search,
-  Filter,
   Download,
   Edit,
   Trash2,
@@ -25,6 +20,8 @@ import Link from "next/link"
 import prisma from "@/lib/prisma"
 import { formatCurrency, formatDate, getEstadoBadgeVariant, getCategoriaBadgeVariant } from "@/lib/utils"
 import DeleteGastoButton from "@/components/DeleteGastoButton"
+import GastosFiltros from "@/components/GastosFiltros"
+import ExportarGastosPDF from "@/components/ExportarGastosPDF"
 
 async function getGastosData(searchParams: any) {
   // Obtener proyecto principal
@@ -55,11 +52,26 @@ async function getGastosData(searchParams: any) {
   if (searchParams.estado) {
     where.estado_id = searchParams.estado;
   }
+  if (searchParams.proveedor) {
+    where.proveedor_id = searchParams.proveedor;
+  }
   if (searchParams.desde) {
     where.fecha = { ...where.fecha, gte: new Date(searchParams.desde) };
   }
   if (searchParams.hasta) {
     where.fecha = { ...where.fecha, lte: new Date(searchParams.hasta) };
+  }
+  if (searchParams.busqueda) {
+    where.descripcion = {
+      contains: searchParams.busqueda,
+      mode: 'insensitive'
+    };
+  }
+  if (searchParams.montoMin) {
+    where.monto = { ...where.monto, gte: parseFloat(searchParams.montoMin) };
+  }
+  if (searchParams.montoMax) {
+    where.monto = { ...where.monto, lte: parseFloat(searchParams.montoMax) };
   }
 
   // Paginación
@@ -129,7 +141,7 @@ async function getGastosData(searchParams: any) {
 
 // Obtener opciones para filtros
 async function getFilterOptions() {
-  const [categorias, personas, estados] = await Promise.all([
+  const [categorias, personas, estados, proveedores] = await Promise.all([
     prisma.categorias_gasto.findMany({
       where: { deleted_at: null, activo: true },
       orderBy: { nombre: 'asc' }
@@ -141,10 +153,14 @@ async function getFilterOptions() {
     prisma.estados_pago.findMany({
       where: { deleted_at: null, activo: true },
       orderBy: { nombre: 'asc' }
+    }),
+    prisma.proveedores.findMany({
+      where: { deleted_at: null, activo: true },
+      orderBy: { nombre: 'asc' }
     })
   ]);
 
-  return { categorias, personas, estados };
+  return { categorias, personas, estados, proveedores };
 }
 
 // Deshabilitar generación estática para páginas con DB
@@ -182,10 +198,12 @@ export default async function GastosPage({
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
+          <ExportarGastosPDF
+            gastos={gastos}
+            totalMonto={totalMonto}
+            proyecto={proyecto}
+            filtrosAplicados={resolvedSearchParams}
+          />
           <Link href="/dashboard/gastos/nuevo">
             <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-1 sm:mr-2" />
@@ -236,102 +254,12 @@ export default async function GastosPage({
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="flex flex-wrap gap-4">
-            <div>
-              <Label htmlFor="categoria">
-                Categoría
-              </Label>
-              <Select
-                id="categoria"
-                name="categoria"
-                defaultValue={resolvedSearchParams.categoria as string || ''}
-              >
-                <option value="">Todas</option>
-                {filterOptions.categorias.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="persona">
-                Pagado por
-              </Label>
-              <Select
-                id="persona"
-                name="persona"
-                defaultValue={resolvedSearchParams.persona as string || ''}
-              >
-                <option value="">Todos</option>
-                {filterOptions.personas.map(per => (
-                  <option key={per.id} value={per.id}>
-                    {per.nombre}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="estado">
-                Estado
-              </Label>
-              <Select
-                id="estado"
-                name="estado"
-                defaultValue={resolvedSearchParams.estado as string || ''}
-              >
-                <option value="">Todos</option>
-                {filterOptions.estados.map(est => (
-                  <option key={est.id} value={est.id}>
-                    {est.nombre}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="desde">
-                Desde
-              </Label>
-              <Input
-                id="desde"
-                type="date"
-                name="desde"
-                defaultValue={resolvedSearchParams.desde as string || ''}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="hasta">
-                Hasta
-              </Label>
-              <Input
-                id="hasta"
-                type="date"
-                name="hasta"
-                defaultValue={resolvedSearchParams.hasta as string || ''}
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button type="submit" variant="outline">
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <GastosFiltros
+        categorias={filterOptions.categorias}
+        personas={filterOptions.personas}
+        estados={filterOptions.estados}
+        proveedores={filterOptions.proveedores}
+      />
 
       {/* Table */}
       <Card>
