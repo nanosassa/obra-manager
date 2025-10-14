@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { signOut, useSession } from 'next-auth/react'
 import {
   Home,
   DollarSign,
@@ -15,7 +16,9 @@ import {
   ChevronDown,
   Menu,
   X,
-  Clock
+  Clock,
+  LogOut,
+  User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -35,6 +38,13 @@ const navigation = [
   },
   { name: 'Proveedores', href: '/dashboard/proveedores', icon: Package },
   { name: 'Personas', href: '/dashboard/personas', icon: Users },
+  {
+    name: 'Usuarios',
+    href: '/dashboard/usuarios',
+    icon: Users,
+    adminOnly: true,
+    showBadge: true  // Mostrar badge de pendientes
+  },
   { name: 'Configuración', href: '/dashboard/configuracion', icon: Settings },
 ]
 
@@ -100,7 +110,9 @@ export default function DashboardLayout({
 }
 
 function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate?: () => void }) {
+  const { data: session } = useSession()
   const [openSubmenus, setOpenSubmenus] = useState<string[]>(['Reportes']) // Reportes abierto por defecto
+  const [pendientesCount, setPendientesCount] = useState(0)
 
   const toggleSubmenu = (itemName: string) => {
     setOpenSubmenus(prev =>
@@ -109,6 +121,37 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
         : [...prev, itemName]
     )
   }
+
+  // Cargar usuarios pendientes si es admin
+  useEffect(() => {
+    const fetchPendientes = async () => {
+      if (session?.user.role === 'super_admin' || session?.user.role === 'admin') {
+        try {
+          const response = await fetch('/api/users/pendientes')
+          if (response.ok) {
+            const data = await response.json()
+            setPendientesCount(data.length)
+          }
+        } catch (error) {
+          console.error('Error al cargar pendientes:', error)
+        }
+      }
+    }
+
+    fetchPendientes()
+    // Actualizar cada 30 segundos
+    const interval = setInterval(fetchPendientes, 30000)
+    return () => clearInterval(interval)
+  }, [session])
+
+  // Filtrar navegación según permisos
+  const filteredNavigation = navigation.filter(item => {
+    // Si el item requiere admin, verificar rol
+    if ('adminOnly' in item && item.adminOnly) {
+      return session?.user.role === 'super_admin' || session?.user.role === 'admin'
+    }
+    return true
+  })
 
   return (
     <div className="flex flex-col flex-grow pt-6 overflow-y-auto bg-white shadow-lg border-r border-gray-200/60">
@@ -129,7 +172,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
 
       <div className="mt-8 flex-1 flex flex-col">
         <nav className="flex-1 px-4 space-y-1">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const Icon = item.icon
             const hasSubmenu = 'submenu' in item
             const isSubmenuOpen = openSubmenus.includes(item.name)
@@ -184,7 +227,12 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
                       )}
                     />
                     {item.name}
-                    {isActive && (
+                    {('showBadge' in item && item.showBadge && pendientesCount > 0) && (
+                      <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                        {pendientesCount}
+                      </span>
+                    )}
+                    {isActive && !('showBadge' in item && item.showBadge && pendientesCount > 0) && (
                       <ChevronRight className="ml-auto h-4 w-4 text-blue-600" />
                     )}
                   </Link>
@@ -228,11 +276,49 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
         </nav>
       </div>
 
-      <div className="flex-shrink-0 flex border-t border-gray-200/60 p-6 bg-gray-50/50">
-        <div className="flex-shrink-0 w-full">
-          <div className="text-xs text-gray-500 font-medium">
-            Sistema v1.0.0
+      <UserSection />
+    </div>
+  )
+}
+
+function UserSection() {
+  const { data: session } = useSession()
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/login' })
+  }
+
+  if (!session?.user) {
+    return null
+  }
+
+  return (
+    <div className="flex-shrink-0 border-t border-gray-200/60">
+      <div className="p-4 bg-gray-50/50">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white font-semibold shadow-md">
+            {session.user.name?.charAt(0).toUpperCase() || 'U'}
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {session.user.name}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {session.user.email}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar Sesión
+        </button>
+      </div>
+      <div className="px-4 py-3 bg-gray-50/30">
+        <div className="text-xs text-gray-500 font-medium text-center">
+          Sistema v1.0.0
         </div>
       </div>
     </div>
