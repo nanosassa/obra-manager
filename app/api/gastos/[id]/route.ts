@@ -65,7 +65,17 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(gasto)
+    // Serializar Decimals a Numbers para evitar problemas en el cliente
+    const gastoSerializado = {
+      ...gasto,
+      monto: Number(gasto.monto),
+      gastos_avances_obra: gasto.gastos_avances_obra.map(gao => ({
+        ...gao,
+        monto_asignado: Number(gao.monto_asignado)
+      }))
+    }
+
+    return NextResponse.json(gastoSerializado)
   } catch (error) {
     console.error('Error al obtener gasto:', error)
     return NextResponse.json(

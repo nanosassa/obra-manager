@@ -272,10 +272,20 @@ export default function GastoDetailPage() {
       {/* Vinculaciones con Avances */}
       <Card>
         <CardHeader>
-          <CardTitle>Vinculaciones con Avances de Obra</CardTitle>
-          <CardDescription>
-            {gasto.gastos_avances_obra.length} vinculaciones registradas
-          </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>Vinculaciones con Avances de Obra</CardTitle>
+              <CardDescription>
+                {gasto.gastos_avances_obra.length} vinculaciones registradas
+              </CardDescription>
+            </div>
+            <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Vinculaciones
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {gasto.gastos_avances_obra.length === 0 ? (
@@ -286,7 +296,7 @@ export default function GastoDetailPage() {
             <div className="space-y-3">
               {gasto.gastos_avances_obra.map((gao) => (
                 <div key={gao.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{gao.avances_obra.descripcion}</p>
                     {gao.notas && (
                       <p className="text-sm text-gray-500">{gao.notas}</p>

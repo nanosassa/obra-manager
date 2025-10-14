@@ -209,6 +209,24 @@ export async function PUT(req: NextRequest) {
     if (gastoData.numero_comprobante === '') gastoData.numero_comprobante = null
     if (gastoData.notas === '') gastoData.notas = null
 
+    // Validar vinculaciones si se enviaron
+    if (vinculaciones && vinculaciones.length > 0) {
+      const vinculacionesActivas = vinculaciones.filter((v: any) => !v._toDelete)
+      if (vinculacionesActivas.length > 0) {
+        const sumaVinculaciones = vinculacionesActivas.reduce(
+          (sum: number, v: any) => sum + parseFloat(v.monto_asignado),
+          0
+        )
+
+        if (Math.abs(sumaVinculaciones - gastoData.monto) > 0.01) {
+          return NextResponse.json(
+            { error: `La suma de vinculaciones (${sumaVinculaciones.toFixed(2)}) no coincide con el monto total (${gastoData.monto.toFixed(2)})` },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
     // Actualizar con transacción
     const result = await prisma.$transaction(async (tx) => {
       // Actualizar el gasto
@@ -220,27 +238,49 @@ export async function PUT(req: NextRequest) {
         }
       })
 
-      // Si se enviaron vinculaciones, actualizar
+      // Si se enviaron vinculaciones, procesarlas
       if (vinculaciones !== undefined) {
-        // Eliminar vinculaciones existentes
-        await tx.gastos_avances_obra.deleteMany({
-          where: { gasto_id: id }
-        })
+        // Separar vinculaciones por tipo
+        const vinculacionesAEliminar = vinculaciones.filter((v: any) => v.id && v._toDelete)
+        const vinculacionesExistentes = vinculaciones.filter((v: any) => v.id && !v._toDelete)
+        const vinculacionesNuevas = vinculaciones.filter((v: any) => !v.id && !v._toDelete)
 
-        // Crear nuevas vinculaciones
-        if (vinculaciones && vinculaciones.length > 0) {
-          for (const vinc of vinculaciones) {
-            await tx.gastos_avances_obra.create({
-              data: {
-                gasto_id: id,
-                avance_obra_id: vinc.avance_obra_id,
-                monto_asignado: parseFloat(vinc.monto_asignado),
-                notas: vinc.notas || null,
-                created_at: new Date(),
-                updated_at: new Date()
+        // 1. Eliminar vinculaciones marcadas
+        if (vinculacionesAEliminar.length > 0) {
+          await tx.gastos_avances_obra.deleteMany({
+            where: {
+              id: {
+                in: vinculacionesAEliminar.map((v: any) => v.id)
               }
-            })
-          }
+            }
+          })
+        }
+
+        // 2. Actualizar vinculaciones existentes
+        for (const vinc of vinculacionesExistentes) {
+          await tx.gastos_avances_obra.update({
+            where: { id: vinc.id },
+            data: {
+              avance_obra_id: vinc.avance_obra_id,
+              monto_asignado: parseFloat(vinc.monto_asignado),
+              notas: vinc.notas || null,
+              updated_at: new Date()
+            }
+          })
+        }
+
+        // 3. Crear nuevas vinculaciones
+        for (const vinc of vinculacionesNuevas) {
+          await tx.gastos_avances_obra.create({
+            data: {
+              gasto_id: id,
+              avance_obra_id: vinc.avance_obra_id,
+              monto_asignado: parseFloat(vinc.monto_asignado),
+              notas: vinc.notas || null,
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          })
         }
       }
 

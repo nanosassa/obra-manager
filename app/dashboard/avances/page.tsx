@@ -307,8 +307,23 @@ export default async function AvancesPage({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  avances.map((avance: any) => (
-                    <TableRow key={avance.id}>
+                  avances.map((avance: any) => {
+                    // Determinar color de fondo según presupuesto y progreso
+                    const presupuestoCompletado = avance.monto_presupuestado &&
+                      avance.total_gastado >= avance.monto_presupuestado
+                    const progresoCompleto = avance.porcentaje_avance >= 100
+
+                    let bgColor = ''
+                    if (presupuestoCompletado) {
+                      if (progresoCompleto) {
+                        bgColor = 'bg-green-100' // Verde pastel más intenso - todo completado
+                      } else {
+                        bgColor = 'bg-red-100' // Rojo pastel más intenso - presupuesto gastado pero progreso incompleto
+                      }
+                    }
+
+                    return (
+                    <TableRow key={avance.id} className={bgColor}>
                       <TableCell>
                         <TooltipProvider>
                           <Tooltip>
@@ -398,7 +413,8 @@ export default async function AvancesPage({
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
