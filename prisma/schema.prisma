@@ -208,3 +208,23 @@ model proyectos_obra {
   @@index([activo], map: "idx_proyectos_activo")
   @@index([responsable_id], map: "idx_proyectos_responsable")
 }
+
+model users {
+  id                   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                 String    @db.VarChar(100)
+  email                String    @unique @db.VarChar(150)
+  password             String?   @db.VarChar(255)
+  role                 String?   @default("viewer") @db.VarChar(20)
+  oauth_provider       String?   @db.VarChar(20)
+  oauth_id             String?   @db.VarChar(255)
+  avatar_url           String?
+  proyecto_asignado_id String?   @db.Uuid
+  activo               Boolean?  @default(true)
+  aprobado             Boolean?  @default(false)
+  created_at           DateTime? @default(now()) @db.Timestamp(6)
+  updated_at           DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
+  @@index([aprobado], map: "idx_users_aprobado")
+}
