@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Save, Plus } from "lucide-react"
 import { Loader2 } from '@/components/ui/spinner'
 import Link from "next/link"
+import VinculacionesEditor, { type Vinculacion } from "@/components/forms/VinculacionesEditor"
 
 interface FormData {
   descripcion: string
@@ -37,6 +38,8 @@ export default function EditarGastoPage() {
   const [personas, setPersonas] = useState<any[]>([])
   const [metodos, setMetodos] = useState<any[]>([])
   const [estados, setEstados] = useState<any[]>([])
+  const [avances, setAvances] = useState<any[]>([])
+  const [vinculaciones, setVinculaciones] = useState<Vinculacion[]>([])
   const [nuevoProveedor, setNuevoProveedor] = useState('')
   const [creandoProveedor, setCreandoProveedor] = useState(false)
   const [mostrarFormProveedor, setMostrarFormProveedor] = useState(false)
@@ -90,6 +93,7 @@ export default function EditarGastoPage() {
         setPersonas(datos.personas)
         setMetodos(datos.metodos)
         setEstados(datos.estados)
+        setAvances(datos.avances || [])
 
         // Configurar datos del gasto
         setFormData({
@@ -104,6 +108,18 @@ export default function EditarGastoPage() {
           metodo_pago_id: gasto.metodo_pago_id || '',
           estado_id: gasto.estado_id
         })
+
+        // Configurar vinculaciones existentes
+        if (gasto.gastos_avances_obra && gasto.gastos_avances_obra.length > 0) {
+          setVinculaciones(
+            gasto.gastos_avances_obra.map((gao: any) => ({
+              id: gao.id,
+              avance_obra_id: gao.avance_obra_id,
+              monto_asignado: Number(gao.monto_asignado), // Asegurar conversión a número
+              notas: gao.notas || ''
+            }))
+          )
+        }
       } catch (error) {
         console.error('Error:', error)
         alert('Error al cargar los datos')
@@ -254,6 +270,26 @@ export default function EditarGastoPage() {
       return
     }
 
+    // Validar vinculaciones
+    const montoGasto = parseFloat(formData.monto) || 0
+    const vinculacionesActivas = vinculaciones.filter(v => !v._toDelete)
+    const totalVinculado = vinculacionesActivas.reduce((sum, v) => sum + (parseFloat(String(v.monto_asignado)) || 0), 0)
+
+    if (vinculacionesActivas.length > 0 && Math.abs(montoGasto - totalVinculado) > 0.01) {
+      alert(
+        `El monto total del gasto ($${montoGasto.toFixed(2)}) debe coincidir con la suma de vinculaciones ($${totalVinculado.toFixed(2)}). ` +
+        `Diferencia: $${(montoGasto - totalVinculado).toFixed(2)}`
+      )
+      return
+    }
+
+    // Validar que todas las vinculaciones tengan avance seleccionado
+    const vinculacionesInvalidas = vinculacionesActivas.filter(v => !v.avance_obra_id || v.monto_asignado <= 0)
+    if (vinculacionesInvalidas.length > 0) {
+      alert('Todas las vinculaciones deben tener un avance y un monto mayor a 0')
+      return
+    }
+
     setSaving(true)
 
     try {
@@ -265,11 +301,12 @@ export default function EditarGastoPage() {
         body: JSON.stringify({
           id: gastoId,
           ...formData,
-          monto: parseFloat(formData.monto),
+          monto: montoGasto,
           proveedor_id: formData.proveedor_id || null,
           pago_persona_id: formData.pago_persona_id || null,
           numero_comprobante: formData.numero_comprobante || null,
-          notas: formData.notas || null
+          notas: formData.notas || null,
+          vinculaciones: vinculaciones
         })
       })
 
@@ -717,9 +754,24 @@ export default function EditarGastoPage() {
                 />
               </div>
             </div>
+          </form>
+        </CardContent>
+      </Card>
 
+      {/* Editor de Vinculaciones */}
+      <VinculacionesEditor
+        montoGasto={parseFloat(formData.monto) || 0}
+        vinculaciones={vinculaciones}
+        onChange={setVinculaciones}
+        avances={avances}
+      />
+
+      {/* Form container con botones */}
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit}>
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Link href="/dashboard/gastos" className="order-2 sm:order-1 w-full sm:w-auto">
                 <Button type="button" variant="outline" className="w-full">
                   Cancelar
