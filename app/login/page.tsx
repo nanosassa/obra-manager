@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -11,19 +11,11 @@ import { Label } from '@/components/ui/label'
 import { AlertCircle, LogIn } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
-  const router = useRouter()
+// Componente separado que usa useSearchParams
+function ErrorHandler({ setError }: { setError: (error: string) => void }) {
   const searchParams = useSearchParams()
-  const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
 
-  // Mostrar errores de OAuth en la URL
-  useState(() => {
+  useEffect(() => {
     const urlError = searchParams.get('error')
     if (urlError === 'pending_approval') {
       setError('Tu cuenta está pendiente de aprobación por un administrador')
@@ -32,6 +24,19 @@ export default function LoginPage() {
     } else if (urlError === 'OAuthAccountNotLinked') {
       setError('Este email ya está registrado con otro método de inicio de sesión')
     }
+  }, [searchParams, setError])
+
+  return null
+}
+
+function LoginForm() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +98,11 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* ErrorHandler envuelto en Suspense */}
+            <Suspense fallback={null}>
+              <ErrorHandler setError={setError} />
+            </Suspense>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
@@ -209,5 +219,18 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Componente principal que exporta la página
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="text-gray-600">Cargando...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
