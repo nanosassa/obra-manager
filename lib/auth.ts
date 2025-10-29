@@ -1,10 +1,22 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
 import prisma from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -62,17 +74,90 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
+    async signIn({ user, account, profile }) {
+      // Si es login con credenciales, ya pasó por authorize()
+      if (account?.provider === "credentials") {
+        return true
       }
+
+      // Si es login con Google
+      if (account?.provider === "google" && profile?.email) {
+        try {
+          // Buscar usuario existente por email
+          let dbUser = await prisma.users.findUnique({
+            where: { email: profile.email }
+          })
+
+          // Si no existe, crear nuevo usuario
+          if (!dbUser) {
+            dbUser = await prisma.users.create({
+              data: {
+                email: profile.email,
+                name: profile.name || profile.email.split('@')[0],
+                role: "viewer", // Los usuarios de Google entran como viewer
+                oauth_provider: "google",
+                oauth_id: account.providerAccountId,
+                aprobado: false, // Requieren aprobación
+                activo: true,
+                password: null // Sin contraseña porque usan OAuth
+              }
+            })
+          } else {
+            // Si existe pero no tiene oauth configurado, actualizar
+            if (!dbUser.oauth_provider) {
+              await prisma.users.update({
+                where: { id: dbUser.id },
+                data: {
+                  oauth_provider: "google",
+                  oauth_id: account.providerAccountId
+                }
+              })
+            }
+          }
+
+          // Verificar si está aprobado (solo para viewers)
+          if (dbUser.role === 'viewer' && dbUser.aprobado === false) {
+            // Redirigir a página de espera de aprobación
+            return '/login?error=pending_approval'
+          }
+
+          // Verificar si está activo
+          if (!dbUser.activo) {
+            return '/login?error=inactive_account'
+          }
+
+          return true
+        } catch (error) {
+          console.error("Error en signIn callback:", error)
+          return false
+        }
+      }
+
+      return true
+    },
+    async jwt({ token, user, account }) {
+      // Primera vez que se crea el token
+      if (account && user) {
+        // Buscar el usuario en la BD para obtener su rol e ID
+        const dbUser = await prisma.users.findUnique({
+          where: { email: user.email! },
+          select: { id: true, role: true, oauth_provider: true }
+        })
+
+        if (dbUser) {
+          token.id = dbUser.id
+          token.role = dbUser.role || "viewer"
+          token.oauthProvider = dbUser.oauth_provider
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.oauthProvider = token.oauthProvider as string | null
       }
       return session
     }
