@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { signOut, useSession } from 'next-auth/react'
 import {
@@ -283,9 +283,14 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string, onNavigate
 
 function UserSection() {
   const { data: session } = useSession()
+  const router = useRouter()
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/login' })
+  }
+
+  const goToProfile = () => {
+    router.push('/dashboard/perfil')
   }
 
   if (!session?.user) {
@@ -295,11 +300,14 @@ function UserSection() {
   return (
     <div className="flex-shrink-0 border-t border-gray-200/60">
       <div className="p-4 bg-gray-50/50">
-        <div className="flex items-center gap-3 mb-3">
+        <button
+          onClick={goToProfile}
+          className="w-full flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        >
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white font-semibold shadow-md">
             {session.user.name?.charAt(0).toUpperCase() || 'U'}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-left">
             <p className="text-sm font-semibold text-gray-900 truncate">
               {session.user.name}
             </p>
@@ -307,7 +315,8 @@ function UserSection() {
               {session.user.email}
             </p>
           </div>
-        </div>
+          <User className="h-4 w-4 text-gray-400" />
+        </button>
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"

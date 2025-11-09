@@ -30,6 +30,9 @@ import prisma from '@/lib/prisma'
 import DeleteAvanceButton from "@/components/DeleteAvanceButton"
 import AvancesFiltros from "@/components/AvancesFiltros"
 import ExportarAvancesPDF from "@/components/ExportarAvancesPDF"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { canCreate, canEdit, canDelete, canExport } from "@/lib/permissions"
 
 async function getAvancesData(searchParams: any) {
   try {
@@ -173,8 +176,17 @@ export default async function AvancesPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const resolvedSearchParams = await searchParams
-  const data = await getAvancesData(resolvedSearchParams)
+  const [data, session] = await Promise.all([
+    getAvancesData(resolvedSearchParams),
+    getServerSession(authOptions)
+  ])
   const { avances, proyecto, proveedores } = data
+
+  const userRole = session?.user?.role as any
+  const canCreateAvances = canCreate(userRole)
+  const canEditAvances = canEdit(userRole)
+  const canDeleteAvances = canDelete(userRole)
+  const canExportAvances = canExport(userRole)
 
   if (!proyecto) {
     return (
@@ -203,17 +215,26 @@ export default async function AvancesPage({
           </p>
         </div>
         <div className="flex gap-2">
-          <ExportarAvancesPDF
-            avances={avances}
-            proyecto={proyecto}
-            filtrosAplicados={resolvedSearchParams}
-          />
-          <Link href="/dashboard/avances/nuevo">
-            <Button>
+          {canExportAvances && (
+            <ExportarAvancesPDF
+              avances={avances}
+              proyecto={proyecto}
+              filtrosAplicados={resolvedSearchParams}
+            />
+          )}
+          {canCreateAvances ? (
+            <Link href="/dashboard/avances/nuevo">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Avance
+              </Button>
+            </Link>
+          ) : (
+            <Button disabled>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Avance
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
@@ -400,16 +421,24 @@ export default async function AvancesPage({
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Link href={`/dashboard/avances/${avance.id}/editar`}>
-                            <Button variant="ghost" size="sm">
+                          {canEditAvances ? (
+                            <Link href={`/dashboard/avances/${avance.id}/editar`}>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button variant="ghost" size="sm" disabled>
                               <Edit className="h-4 w-4" />
                             </Button>
-                          </Link>
-                          <DeleteAvanceButton
-                            avanceId={avance.id}
-                            avanceDescripcion={avance.descripcion}
-                            gastosCount={avance.gastos_count}
-                          />
+                          )}
+                          {canDeleteAvances && (
+                            <DeleteAvanceButton
+                              avanceId={avance.id}
+                              avanceDescripcion={avance.descripcion}
+                              gastosCount={avance.gastos_count}
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

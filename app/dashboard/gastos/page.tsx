@@ -22,6 +22,9 @@ import { formatCurrency, formatDate, getEstadoBadgeVariant, getCategoriaBadgeVar
 import DeleteGastoButton from "@/components/DeleteGastoButton"
 import GastosFiltros from "@/components/GastosFiltros"
 import ExportarGastosPDF from "@/components/ExportarGastosPDF"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { canCreate, canExport, canEdit, canDelete } from "@/lib/permissions"
 
 async function getGastosData(searchParams: any) {
   // Obtener proyecto principal
@@ -172,12 +175,18 @@ export default async function GastosPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const resolvedSearchParams = await searchParams
-  const [data, filterOptions] = await Promise.all([
+  const [data, filterOptions, session] = await Promise.all([
     getGastosData(resolvedSearchParams),
-    getFilterOptions()
+    getFilterOptions(),
+    getServerSession(authOptions)
   ]);
 
   const { proyecto, gastos, total, totalPages, currentPage, totalMonto } = data;
+  const userRole = session?.user?.role as any;
+  const canCreateGastos = canCreate(userRole);
+  const canExportGastos = canExport(userRole);
+  const canEditGastos = canEdit(userRole);
+  const canDeleteGastos = canDelete(userRole);
 
   if (!proyecto) {
     return (
@@ -198,19 +207,29 @@ export default async function GastosPage({
           </p>
         </div>
         <div className="flex gap-2">
-          <ExportarGastosPDF
-            gastos={gastos}
-            totalMonto={totalMonto}
-            proyecto={proyecto}
-            filtrosAplicados={resolvedSearchParams}
-          />
-          <Link href="/dashboard/gastos/nuevo">
-            <Button className="w-full sm:w-auto">
+          {canExportGastos && (
+            <ExportarGastosPDF
+              gastos={gastos}
+              totalMonto={totalMonto}
+              proyecto={proyecto}
+              filtrosAplicados={resolvedSearchParams}
+            />
+          )}
+          {canCreateGastos ? (
+            <Link href="/dashboard/gastos/nuevo">
+              <Button className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Nuevo Gasto</span>
+                <span className="sm:hidden">Nuevo</span>
+              </Button>
+            </Link>
+          ) : (
+            <Button className="w-full sm:w-auto" disabled title="No tienes permisos para crear gastos">
               <Plus className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Nuevo Gasto</span>
               <span className="sm:hidden">Nuevo</span>
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
@@ -344,19 +363,27 @@ export default async function GastosPage({
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Link href={`/dashboard/gastos/${gasto.id}`}>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" title="Ver detalle">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
-                            <Button variant="ghost" size="sm">
+                          {canEditGastos ? (
+                            <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
+                              <Button variant="ghost" size="sm" title="Editar">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button variant="ghost" size="sm" disabled title="No tienes permisos para editar">
                               <Edit className="h-4 w-4" />
                             </Button>
-                          </Link>
-                          <DeleteGastoButton
-                            gastoId={gasto.id}
-                            gastoDescripcion={gasto.descripcion}
-                          />
+                          )}
+                          {canDeleteGastos && (
+                            <DeleteGastoButton
+                              gastoId={gasto.id}
+                              gastoDescripcion={gasto.descripcion}
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

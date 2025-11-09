@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/utils"
 import DeleteAvanceButton from "@/components/DeleteAvanceButton"
 import VincularGastoButton from "@/components/VincularGastoButton"
 import DesvincularGastoButton from "@/components/DesvincularGastoButton"
+import { usePermissions } from "@/hooks/usePermissions"
 
 interface Avance {
   id: string
@@ -30,6 +31,7 @@ interface Avance {
 export default function AvanceDetailPage() {
   const params = useParams()
   const avanceId = params.id as string
+  const { canEdit, canDelete, isAdmin } = usePermissions()
 
   const [avance, setAvance] = useState<Avance | null>(null)
   const [loading, setLoading] = useState(true)
@@ -111,17 +113,26 @@ export default function AvanceDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href={`/dashboard/avances/${avance.id}/editar`}>
-            <Button variant="outline">
+          {canEdit ? (
+            <Link href={`/dashboard/avances/${avance.id}/editar`}>
+              <Button variant="outline">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="outline" disabled>
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
-          </Link>
-          <DeleteAvanceButton
-            avanceId={avance.id}
-            avanceDescripcion={avance.descripcion}
-            gastosCount={avance.gastos_count}
-          />
+          )}
+          {isAdmin && (
+            <DeleteAvanceButton
+              avanceId={avance.id}
+              avanceDescripcion={avance.descripcion}
+              gastosCount={avance.gastos_count}
+            />
+          )}
         </div>
       </div>
 
@@ -239,10 +250,12 @@ export default function AvanceDetailPage() {
                 {avance.gastos_count} gastos asociados a este avance
               </CardDescription>
             </div>
-            <VincularGastoButton
-              avanceId={avance.id}
-              onVinculado={() => window.location.reload()}
-            />
+            {canEdit && (
+              <VincularGastoButton
+                avanceId={avance.id}
+                onVinculado={() => window.location.reload()}
+              />
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -270,7 +283,7 @@ export default function AvanceDetailPage() {
                     </p>
                   </div>
                   <div className="flex-shrink-0">
-                    {gao.gastos && (
+                    {canEdit && gao.gastos && (
                       <DesvincularGastoButton
                         vinculacionId={gao.id}
                         gastoDescripcion={gao.gastos.descripcion}
