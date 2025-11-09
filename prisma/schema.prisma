@@ -91,6 +91,7 @@ model gastos {
   proveedores         proveedores?          @relation(fields: [proveedor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   proyectos_obra      proyectos_obra        @relation(fields: [proyecto_obra_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   gastos_avances_obra gastos_avances_obra[]
+  pagos_gastos        pagos_gastos[]
 
   @@index([categoria_id], map: "idx_gastos_categoria")
   @@index([deleted_at], map: "idx_gastos_deleted")
@@ -128,6 +129,7 @@ model metodos_pago {
   updated_at  DateTime? @default(now()) @db.Timestamp(6)
   deleted_at  DateTime? @db.Timestamp(6)
   gastos      gastos[]
+  pagos       pagos[]
 }
 
 model personas {
@@ -143,6 +145,7 @@ model personas {
   gastos         gastos[]
   presupuestos   presupuestos[]
   proyectos_obra proyectos_obra[]
+  pagos          pagos[]
 }
 
 model presupuestos {
@@ -185,6 +188,7 @@ model proveedores {
   deleted_at      DateTime?      @db.Timestamp(6)
   gastos          gastos[]
   presupuestos    presupuestos[]
+  pagos           pagos[]
 }
 
 model proyectos_obra {
@@ -203,10 +207,49 @@ model proyectos_obra {
   avances_obra       avances_obra[]
   gastos             gastos[]
   presupuestos       presupuestos[]
+  pagos              pagos[]
   personas           personas?      @relation(fields: [responsable_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([activo], map: "idx_proyectos_activo")
   @@index([responsable_id], map: "idx_proyectos_responsable")
+}
+
+model pagos {
+  id               String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  fecha_pago       DateTime       @db.Date
+  monto_total      Decimal        @db.Decimal(15, 2)
+  proveedor_id     String?        @db.Uuid
+  pago_persona_id  String?        @db.Uuid
+  proyecto_obra_id String         @db.Uuid
+  metodo_pago_id   String?        @db.Uuid
+  comprobante      String?        @db.VarChar(100)
+  notas            String?        @db.Text
+  created_at       DateTime?      @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime?      @db.Timestamptz(6)
+  proveedores      proveedores?   @relation(fields: [proveedor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  personas         personas?      @relation(fields: [pago_persona_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  proyectos_obra   proyectos_obra @relation(fields: [proyecto_obra_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  metodos_pago     metodos_pago?  @relation(fields: [metodo_pago_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pagos_gastos     pagos_gastos[]
+
+  @@index([fecha_pago], map: "idx_pagos_fecha")
+  @@index([proveedor_id], map: "idx_pagos_proveedor")
+  @@index([pago_persona_id], map: "idx_pagos_persona")
+  @@index([proyecto_obra_id], map: "idx_pagos_proyecto")
+}
+
+model pagos_gastos {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pago_id        String    @db.Uuid
+  gasto_id       String    @db.Uuid
+  monto_aplicado Decimal   @db.Decimal(15, 2)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+  pagos          pagos     @relation(fields: [pago_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  gastos         gastos    @relation(fields: [gasto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([pago_id], map: "idx_pagos_gastos_pago")
+  @@index([gasto_id], map: "idx_pagos_gastos_gasto")
 }
 
 model users {
