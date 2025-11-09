@@ -30,6 +30,9 @@ import prisma from '@/lib/prisma'
 import DeleteAvanceButton from "@/components/DeleteAvanceButton"
 import AvancesFiltros from "@/components/AvancesFiltros"
 import ExportarAvancesPDF from "@/components/ExportarAvancesPDF"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { canCreate, canEdit, canDelete, canExport } from "@/lib/permissions"
 
 async function getAvancesData(searchParams: any) {
   try {
@@ -109,6 +112,7 @@ async function getAvancesData(searchParams: any) {
       const porcentajeGastado = presupuesto > 0
         ? (totalGastado / presupuesto) * 100
         : 0
+      const saldo = presupuesto - totalGastado
 
       return {
         id: avance.id,
@@ -120,6 +124,7 @@ async function getAvancesData(searchParams: any) {
         monto_presupuestado: presupuesto,
         porcentaje_avance: Number(avance.porcentaje_avance) || 0,
         total_gastado: totalGastado,
+        saldo: saldo,
         porcentaje_gastado: porcentajeGastado,
         gastos_count: avance.gastos_avances_obra.length,
         // Serializar gastos_avances_obra para componentes cliente
@@ -173,8 +178,17 @@ export default async function AvancesPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const resolvedSearchParams = await searchParams
-  const data = await getAvancesData(resolvedSearchParams)
+  const [data, session] = await Promise.all([
+    getAvancesData(resolvedSearchParams),
+    getServerSession(authOptions)
+  ])
   const { avances, proyecto, proveedores } = data
+
+  const userRole = session?.user?.role as any
+  const canCreateAvances = canCreate(userRole)
+  const canEditAvances = canEdit(userRole)
+  const canDeleteAvances = canDelete(userRole)
+  const canExportAvances = canExport(userRole)
 
   if (!proyecto) {
     return (
@@ -203,17 +217,26 @@ export default async function AvancesPage({
           </p>
         </div>
         <div className="flex gap-2">
-          <ExportarAvancesPDF
-            avances={avances}
-            proyecto={proyecto}
-            filtrosAplicados={resolvedSearchParams}
-          />
-          <Link href="/dashboard/avances/nuevo">
-            <Button>
+          {canExportAvances && (
+            <ExportarAvancesPDF
+              avances={avances}
+              proyecto={proyecto}
+              filtrosAplicados={resolvedSearchParams}
+            />
+          )}
+          {canCreateAvances ? (
+            <Link href="/dashboard/avances/nuevo">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Avance
+              </Button>
+            </Link>
+          ) : (
+            <Button disabled>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Avance
             </Button>
-          </Link>
+          )}
         </div>
       </div>
 
@@ -294,6 +317,7 @@ export default async function AvancesPage({
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Presupuesto</TableHead>
                   <TableHead>Gastado</TableHead>
+                  <TableHead>Saldo</TableHead>
                   <TableHead>Progreso</TableHead>
                   <TableHead>Gastos</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -302,7 +326,7 @@ export default async function AvancesPage({
               <TableBody>
                 {avances.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       No hay avances registrados
                     </TableCell>
                   </TableRow>
@@ -376,6 +400,15 @@ export default async function AvancesPage({
                         )}
                       </TableCell>
                       <TableCell>
+                        {avance.monto_presupuestado ? (
+                          <span className={`font-medium ${avance.saldo < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatCurrency(avance.saldo)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
                             <span>{avance.porcentaje_avance}%</span>
@@ -400,16 +433,24 @@ export default async function AvancesPage({
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Link href={`/dashboard/avances/${avance.id}/editar`}>
-                            <Button variant="ghost" size="sm">
+                          {canEditAvances ? (
+                            <Link href={`/dashboard/avances/${avance.id}/editar`}>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Button variant="ghost" size="sm" disabled>
                               <Edit className="h-4 w-4" />
                             </Button>
-                          </Link>
-                          <DeleteAvanceButton
-                            avanceId={avance.id}
-                            avanceDescripcion={avance.descripcion}
-                            gastosCount={avance.gastos_count}
-                          />
+                          )}
+                          {canDeleteAvances && (
+                            <DeleteAvanceButton
+                              avanceId={avance.id}
+                              avanceDescripcion={avance.descripcion}
+                              gastosCount={avance.gastos_count}
+                            />
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

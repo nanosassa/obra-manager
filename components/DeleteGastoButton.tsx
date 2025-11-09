@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
+import { usePermissions } from "@/hooks/usePermissions"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -21,6 +22,7 @@ interface DeleteGastoButtonProps {
 }
 
 export default function DeleteGastoButton({ gastoId, gastoDescripcion }: DeleteGastoButtonProps) {
+  const { canDelete } = usePermissions()
   const [isOpen, setIsOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
@@ -54,6 +56,9 @@ export default function DeleteGastoButton({ gastoId, gastoDescripcion }: DeleteG
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(true)}
+        disabled={!canDelete}
+        className={!canDelete ? 'opacity-50 cursor-not-allowed' : ''}
+        title={!canDelete ? "No tienes permisos para eliminar gastos" : "Eliminar gasto"}
       >
         <Trash2 className="h-4 w-4" />
       </Button>

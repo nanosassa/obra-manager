@@ -9,6 +9,7 @@ import { ArrowLeft, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency, formatDate, getEstadoBadgeVariant, getCategoriaBadgeVariant } from "@/lib/utils"
 import DeleteGastoButton from "@/components/DeleteGastoButton"
+import { usePermissions } from "@/hooks/usePermissions"
 
 interface Gasto {
   id: string
@@ -53,6 +54,7 @@ interface Gasto {
 export default function GastoDetailPage() {
   const params = useParams()
   const gastoId = params.id as string
+  const { canEdit, canDelete } = usePermissions()
 
   const [gasto, setGasto] = useState<Gasto | null>(null)
   const [loading, setLoading] = useState(true)
@@ -137,16 +139,25 @@ export default function GastoDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
-            <Button variant="outline">
+          {canEdit ? (
+            <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
+              <Button variant="outline">
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="outline" disabled title="No tienes permisos para editar">
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
-          </Link>
-          <DeleteGastoButton
-            gastoId={gasto.id}
-            gastoDescripcion={gasto.descripcion}
-          />
+          )}
+          {canDelete && (
+            <DeleteGastoButton
+              gastoId={gasto.id}
+              gastoDescripcion={gasto.descripcion}
+            />
+          )}
         </div>
       </div>
 
@@ -279,12 +290,19 @@ export default function GastoDetailPage() {
                 {gasto.gastos_avances_obra.length} vinculaciones registradas
               </CardDescription>
             </div>
-            <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
-              <Button variant="outline" size="sm">
+            {canEdit ? (
+              <Link href={`/dashboard/gastos/${gasto.id}/editar`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Vinculaciones
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" disabled title="No tienes permisos para editar">
                 <Edit className="h-4 w-4 mr-2" />
                 Editar Vinculaciones
               </Button>
-            </Link>
+            )}
           </div>
         </CardHeader>
         <CardContent>

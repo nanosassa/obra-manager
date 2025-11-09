@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
+import { usePermissions } from "@/hooks/usePermissions"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -22,6 +23,7 @@ interface DeleteAvanceButtonProps {
 }
 
 export default function DeleteAvanceButton({ avanceId, avanceDescripcion, gastosCount = 0 }: DeleteAvanceButtonProps) {
+  const { canDelete: hasDeletePermission } = usePermissions()
   const [isOpen, setIsOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
@@ -49,7 +51,14 @@ export default function DeleteAvanceButton({ avanceId, avanceDescripcion, gastos
     }
   }
 
-  const canDelete = gastosCount === 0
+  const hasLinkedGastos = gastosCount > 0
+  const canDelete = hasDeletePermission && !hasLinkedGastos
+
+  const getDisabledReason = () => {
+    if (!hasDeletePermission) return "No tienes permisos para eliminar avances"
+    if (hasLinkedGastos) return `No se puede eliminar: tiene ${gastosCount} gastos vinculados`
+    return ""
+  }
 
   return (
     <>
@@ -58,7 +67,8 @@ export default function DeleteAvanceButton({ avanceId, avanceDescripcion, gastos
         size="sm"
         onClick={() => setIsOpen(true)}
         disabled={!canDelete}
-        title={!canDelete ? `No se puede eliminar: tiene ${gastosCount} gastos vinculados` : 'Eliminar avance'}
+        className={!canDelete ? 'opacity-50 cursor-not-allowed' : ''}
+        title={!canDelete ? getDisabledReason() : 'Eliminar avance'}
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -68,7 +78,11 @@ export default function DeleteAvanceButton({ avanceId, avanceDescripcion, gastos
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar avance de obra?</AlertDialogTitle>
             <AlertDialogDescription>
-              {!canDelete ? (
+              {!hasDeletePermission ? (
+                <>
+                  No tienes permisos para eliminar avances de obra.
+                </>
+              ) : hasLinkedGastos ? (
                 <>
                   No se puede eliminar el avance "{avanceDescripcion}" porque tiene {gastosCount} gastos vinculados.
                   Primero debe desvincular o eliminar los gastos asociados.

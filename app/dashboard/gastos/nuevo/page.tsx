@@ -1,3 +1,7 @@
+import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { canCreate } from "@/lib/permissions"
 import NuevoGastoForm from "@/components/forms/NuevoGastoForm"
 import prisma from "@/lib/prisma"
 
@@ -77,6 +81,16 @@ async function getFormData() {
 export const dynamic = 'force-dynamic'
 
 export default async function NuevoGastoPage() {
+  // Check authentication and permissions
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    redirect('/login')
+  }
+
+  if (!canCreate(session.user.role as any)) {
+    redirect('/dashboard/gastos')
+  }
+
   const data = await getFormData();
 
   if (!data) {

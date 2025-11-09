@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { usePermissions } from "@/hooks/usePermissions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +31,7 @@ export default function EditarGastoPage() {
   const router = useRouter()
   const params = useParams()
   const gastoId = params.id as string
+  const { canEdit } = usePermissions()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -71,6 +73,13 @@ export default function EditarGastoPage() {
     metodo_pago_id: '',
     estado_id: ''
   })
+
+  // Redirect if user doesn't have edit permissions
+  useEffect(() => {
+    if (!canEdit) {
+      router.push('/dashboard/gastos')
+    }
+  }, [canEdit, router])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -323,6 +332,11 @@ export default function EditarGastoPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Don't render form if user doesn't have permission
+  if (!canEdit) {
+    return null
   }
 
   if (loading) {

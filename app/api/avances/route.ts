@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { requireCreatePermission, requireEditPermission, requireDeletePermission } from '@/lib/checkRole'
 
 // GET - Obtener avances
 export async function GET(req: NextRequest) {
@@ -88,6 +89,10 @@ export async function GET(req: NextRequest) {
 
 // POST - Crear nuevo avance
 export async function POST(req: NextRequest) {
+  // Verificar permisos de creación (bloquea viewers y contadores)
+  const { error } = await requireCreatePermission()
+  if (error) return error
+
   try {
     const body = await req.json()
 
@@ -143,6 +148,10 @@ export async function POST(req: NextRequest) {
 
 // PUT - Actualizar avance
 export async function PUT(req: NextRequest) {
+  // Verificar permisos de edición (bloquea viewers)
+  const { error } = await requireEditPermission()
+  if (error) return error
+
   try {
     const body = await req.json()
     const { id, ...data } = body
@@ -190,6 +199,10 @@ export async function PUT(req: NextRequest) {
 
 // DELETE - Eliminar avance (soft delete)
 export async function DELETE(req: NextRequest) {
+  // Verificar permisos de eliminación (solo admins)
+  const { error } = await requireDeletePermission()
+  if (error) return error
+
   try {
     const searchParams = req.nextUrl.searchParams
     const id = searchParams.get('id')

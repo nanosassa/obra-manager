@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Unlink } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
+import { usePermissions } from "@/hooks/usePermissions"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -28,6 +29,7 @@ export default function DesvincularGastoButton({
   montoAsignado,
   onDesvinculado
 }: DesvincularGastoButtonProps) {
+  const { canEdit } = usePermissions()
   const [isOpen, setIsOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -59,8 +61,9 @@ export default function DesvincularGastoButton({
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(true)}
-        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        title="Desvincular gasto"
+        disabled={!canEdit}
+        className={`text-red-600 hover:text-red-700 hover:bg-red-50 ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+        title={!canEdit ? "No tienes permisos para desvincular gastos" : "Desvincular gasto"}
       >
         <Unlink className="h-4 w-4" />
       </Button>

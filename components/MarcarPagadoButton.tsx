@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { formatCurrency } from '@/lib/utils'
+import { usePermissions } from '@/hooks/usePermissions'
 
 interface Props {
   gastoId: string
@@ -31,6 +32,7 @@ export default function MarcarPagadoButton({
   estadoPagadoId
 }: Props) {
   const router = useRouter()
+  const { canEdit } = usePermissions()
   const [loading, setLoading] = useState(false)
   const [showDialog, setShowDialog] = useState(false)
 
@@ -74,8 +76,9 @@ export default function MarcarPagadoButton({
         variant="outline"
         size="sm"
         onClick={() => setShowDialog(true)}
-        disabled={loading || !estadoPagadoId}
-        className="text-green-600 hover:text-green-700"
+        disabled={loading || !estadoPagadoId || !canEdit}
+        className={`text-green-600 hover:text-green-700 ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
+        title={!canEdit ? "No tienes permisos para marcar como pagado" : "Marcar como pagado"}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -90,14 +93,14 @@ export default function MarcarPagadoButton({
           <AlertDialogHeader>
             <AlertDialogTitle>¿Marcar como pagado?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Está a punto de marcar este gasto como pagado:</p>
+              <div>Está a punto de marcar este gasto como pagado:</div>
               <div className="p-3 bg-gray-50 rounded-lg space-y-1">
-                <p className="font-medium text-gray-900">{gastoDescripcion}</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(monto)}</p>
+                <div className="font-medium text-gray-900">{gastoDescripcion}</div>
+                <div className="text-lg font-bold text-green-600">{formatCurrency(monto)}</div>
               </div>
-              <p className="text-sm">
+              <div className="text-sm">
                 Esta acción se puede revertir editando el gasto posteriormente.
-              </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

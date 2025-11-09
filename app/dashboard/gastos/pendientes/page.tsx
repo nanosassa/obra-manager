@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -142,6 +145,12 @@ async function getGastosPendientes() {
 export const dynamic = 'force-dynamic'
 
 export default async function GastosPendientesPage() {
+  // Check authentication
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    redirect('/login')
+  }
+
   const data = await getGastosPendientes()
   const { proyecto, gastos, totales, gastosPorPersona, estadoPagadoId } = data
 
