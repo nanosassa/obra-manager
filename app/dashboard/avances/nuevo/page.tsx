@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { usePermissions } from "@/hooks/usePermissions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,7 @@ interface FormData {
 
 export default function NuevoAvancePage() {
   const router = useRouter()
+  const { canCreate } = usePermissions()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     descripcion: '',
@@ -28,6 +30,18 @@ export default function NuevoAvancePage() {
     porcentaje_avance: '0',
     notas: ''
   })
+
+  // Redirect if user doesn't have create permissions
+  useEffect(() => {
+    if (!canCreate) {
+      router.push('/dashboard/avances')
+    }
+  }, [canCreate, router])
+
+  // Don't render form if user doesn't have permission
+  if (!canCreate) {
+    return null
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

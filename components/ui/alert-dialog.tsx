@@ -80,9 +80,9 @@ const AlertDialogTitle = ({ children, className }: AlertDialogTitleProps) => (
 )
 
 const AlertDialogDescription = ({ children, className }: AlertDialogDescriptionProps) => (
-  <p className={cn("text-sm text-gray-600", className)}>
+  <div className={cn("text-sm text-gray-600", className)}>
     {children}
-  </p>
+  </div>
 )
 
 const AlertDialogFooter = ({ children, className }: AlertDialogFooterProps) => (

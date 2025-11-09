@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { usePermissions } from "@/hooks/usePermissions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,7 @@ export default function EditarAvancePage() {
   const router = useRouter()
   const params = useParams()
   const avanceId = params.id as string
+  const { canEdit } = usePermissions()
 
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -32,6 +34,13 @@ export default function EditarAvancePage() {
     porcentaje_avance: '0',
     notas: ''
   })
+
+  // Redirect if user doesn't have edit permissions
+  useEffect(() => {
+    if (!canEdit) {
+      router.push('/dashboard/avances')
+    }
+  }, [canEdit, router])
 
   // Cargar datos del avance
   useEffect(() => {
@@ -109,6 +118,11 @@ export default function EditarAvancePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Don't render form if user doesn't have permission
+  if (!canEdit) {
+    return null
   }
 
   if (loadingData) {

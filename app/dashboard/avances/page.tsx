@@ -112,6 +112,7 @@ async function getAvancesData(searchParams: any) {
       const porcentajeGastado = presupuesto > 0
         ? (totalGastado / presupuesto) * 100
         : 0
+      const saldo = presupuesto - totalGastado
 
       return {
         id: avance.id,
@@ -123,6 +124,7 @@ async function getAvancesData(searchParams: any) {
         monto_presupuestado: presupuesto,
         porcentaje_avance: Number(avance.porcentaje_avance) || 0,
         total_gastado: totalGastado,
+        saldo: saldo,
         porcentaje_gastado: porcentajeGastado,
         gastos_count: avance.gastos_avances_obra.length,
         // Serializar gastos_avances_obra para componentes cliente
@@ -315,6 +317,7 @@ export default async function AvancesPage({
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Presupuesto</TableHead>
                   <TableHead>Gastado</TableHead>
+                  <TableHead>Saldo</TableHead>
                   <TableHead>Progreso</TableHead>
                   <TableHead>Gastos</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -323,7 +326,7 @@ export default async function AvancesPage({
               <TableBody>
                 {avances.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       No hay avances registrados
                     </TableCell>
                   </TableRow>
@@ -394,6 +397,15 @@ export default async function AvancesPage({
                           <div className="text-xs text-gray-500">
                             {avance.porcentaje_gastado.toFixed(1)}% del presupuesto
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {avance.monto_presupuestado ? (
+                          <span className={`font-medium ${avance.saldo < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {formatCurrency(avance.saldo)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>

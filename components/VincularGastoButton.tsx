@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Search, Link as LinkIcon } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
+import { usePermissions } from "@/hooks/usePermissions"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -37,6 +38,7 @@ interface VincularGastoButtonProps {
 }
 
 export default function VincularGastoButton({ avanceId, onVinculado }: VincularGastoButtonProps) {
+  const { canEdit } = usePermissions()
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -140,7 +142,12 @@ export default function VincularGastoButton({ avanceId, onVinculado }: VincularG
 
   return (
     <>
-      <Button size="sm" onClick={() => setIsOpen(true)}>
+      <Button
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        disabled={!canEdit}
+        title={!canEdit ? "No tienes permisos para vincular gastos" : "Vincular gasto"}
+      >
         <Plus className="h-4 w-4 mr-2" />
         Vincular Gasto
       </Button>
