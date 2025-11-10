@@ -32,15 +32,18 @@ export function formatDateLong(date: Date | string): string {
 }
 
 export function getEstadoBadgeVariant(estado: string): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" {
-  switch (estado.toUpperCase()) {
-    case 'PAGADO':
-      return 'success'
-    case 'PENDIENTE':
-      return 'warning'
-    case 'CANCELADO':
-      return 'destructive'
-    default:
-      return 'default'
+  const estadoUpper = estado.toUpperCase()
+
+  if (estadoUpper === 'PAGADO') {
+    return 'success'
+  } else if (estadoUpper.includes('PARCIAL')) {
+    return 'secondary'
+  } else if (estadoUpper === 'PENDIENTE') {
+    return 'warning'
+  } else if (estadoUpper === 'CANCELADO') {
+    return 'destructive'
+  } else {
+    return 'default'
   }
 }
 
