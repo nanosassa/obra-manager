@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Gestion de Obra
 
-## Getting Started
+Aplicación web para la gestión integral de obras de construcción: control de gastos, seguimiento de avances, reportes y administración de usuarios con roles.
 
-First, run the development server:
+## Funcionalidades
+
+- **Dashboard** con estadísticas en tiempo real, gráficos y resúmenes
+- **Gestión de Gastos** - CRUD completo, filtros avanzados, paginación, vinculación a avances, exportación PDF
+- **Avances de Obra** - Seguimiento de progreso con presupuesto vs ejecución real
+- **Pagos Pendientes** - Vista dedicada con alertas de vencimiento y resumen por persona
+- **Reportes** - Por categoría, resumen ejecutivo, gráficos interactivos
+- **Usuarios y Roles** - 5 niveles (super_admin, admin, project_manager, contador, viewer) con permisos granulares
+- **Autenticación** - Login con credenciales o Google OAuth, registro con aprobación
+
+## Stack
+
+- **Frontend**: React 19 + Next.js 15.5 + TailwindCSS 4
+- **Backend**: Next.js API Routes (App Router)
+- **BD**: PostgreSQL + Prisma ORM
+- **Auth**: NextAuth.js
+- **Charts**: Recharts
+- **PDF**: jsPDF
+- **Deploy**: Docker + GitHub Actions + EasyPanel
+
+## Desarrollo local
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con DATABASE_URL, NEXTAUTH_SECRET, etc.
+
+# Generar cliente Prisma
+npx prisma generate
+
+# Ejecutar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Con Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker-compose up
+```
 
-## Learn More
+## Scripts útiles
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev            # Servidor de desarrollo (Turbopack)
+npm run build          # Build de producción
+npm run type-check     # Verificación de tipos TypeScript
+npm run create-admin   # Crear usuario super_admin
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El deploy a EasyPanel se ejecuta automáticamente via GitHub Actions al pushear a `main`/`master`.
