@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { nombre, telefono, email } = await request.json()
+    const { nombre, apellido, telefono, email } = await request.json()
 
     if (!nombre?.trim()) {
       return NextResponse.json(
@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     const nuevaPersona = await prisma.personas.create({
       data: {
         nombre: nombre.trim(),
+        apellido: apellido?.trim() || null,
         telefono: telefono?.trim() || null,
         email: email?.trim() || null,
         activo: true,

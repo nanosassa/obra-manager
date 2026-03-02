@@ -9,37 +9,24 @@ import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Edit, Trash2, X, Package, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, X, Tag, CheckCircle, XCircle } from 'lucide-react'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 import { formatDate } from '@/lib/utils'
 
-interface Proveedor {
+interface Categoria {
   id: string
   nombre: string
-  razon_social: string | null
-  cuit: string | null
-  direccion: string | null
-  telefono: string | null
-  email: string | null
-  contacto_nombre: string | null
+  descripcion: string | null
   activo: boolean
   created_at: string
 }
 
-const emptyForm = {
-  nombre: '',
-  razon_social: '',
-  cuit: '',
-  direccion: '',
-  telefono: '',
-  email: '',
-  contacto_nombre: '',
-}
+const emptyForm = { nombre: '', descripcion: '' }
 
-export default function ProveedoresPage() {
+export default function CategoriasPage() {
   const { data: session } = useSession()
   const role = session?.user?.role as UserRole | undefined
-  const [proveedores, setProveedores] = useState<Proveedor[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -48,23 +35,24 @@ export default function ProveedoresPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const canCreateProv = hasPermission(role, 'proveedores:create')
-  const canUpdateProv = hasPermission(role, 'proveedores:update')
-  const canDeleteProv = hasPermission(role, 'proveedores:delete')
+  // Categorías usan permisos de gastos ya que son categorías de gasto
+  const canCreateCat = hasPermission(role, 'proveedores:create')
+  const canUpdateCat = hasPermission(role, 'proveedores:update')
+  const canDeleteCat = hasPermission(role, 'proveedores:delete')
 
   useEffect(() => {
-    fetchProveedores()
+    fetchCategorias()
   }, [])
 
-  const fetchProveedores = async () => {
+  const fetchCategorias = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/proveedores')
+      const response = await fetch('/api/categorias')
       if (response.ok) {
-        setProveedores(await response.json())
+        setCategorias(await response.json())
       }
     } catch (err) {
-      console.error('Error al cargar proveedores:', err)
+      console.error('Error al cargar categorías:', err)
     } finally {
       setLoading(false)
     }
@@ -77,16 +65,11 @@ export default function ProveedoresPage() {
     setShowModal(true)
   }
 
-  const openEdit = (p: Proveedor) => {
-    setEditingId(p.id)
+  const openEdit = (c: Categoria) => {
+    setEditingId(c.id)
     setFormData({
-      nombre: p.nombre,
-      razon_social: p.razon_social || '',
-      cuit: p.cuit || '',
-      direccion: p.direccion || '',
-      telefono: p.telefono || '',
-      email: p.email || '',
-      contacto_nombre: p.contacto_nombre || '',
+      nombre: c.nombre,
+      descripcion: c.descripcion || '',
     })
     setError('')
     setShowModal(true)
@@ -100,7 +83,7 @@ export default function ProveedoresPage() {
     setSaving(true)
     setError('')
     try {
-      const url = editingId ? `/api/proveedores/${editingId}` : '/api/proveedores'
+      const url = editingId ? `/api/categorias/${editingId}` : '/api/categorias'
       const method = editingId ? 'PUT' : 'POST'
       const response = await fetch(url, {
         method,
@@ -109,7 +92,7 @@ export default function ProveedoresPage() {
       })
       if (response.ok) {
         setShowModal(false)
-        fetchProveedores()
+        fetchCategorias()
       } else {
         const data = await response.json()
         setError(data.error || 'Error al guardar')
@@ -122,11 +105,11 @@ export default function ProveedoresPage() {
   }
 
   const handleDelete = async (id: string, nombre: string) => {
-    if (!confirm(`¿Eliminar el proveedor "${nombre}"?`)) return
+    if (!confirm(`¿Eliminar la categoría "${nombre}"?`)) return
     try {
-      const response = await fetch(`/api/proveedores/${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/categorias/${id}`, { method: 'DELETE' })
       if (response.ok) {
-        fetchProveedores()
+        fetchCategorias()
       } else {
         const data = await response.json()
         alert(data.error || 'Error al eliminar')
@@ -136,14 +119,11 @@ export default function ProveedoresPage() {
     }
   }
 
-  const filtered = proveedores.filter(p => {
+  const filtered = categorias.filter(c => {
     if (!busqueda) return true
     const q = busqueda.toLowerCase()
-    return p.nombre.toLowerCase().includes(q)
-      || p.razon_social?.toLowerCase().includes(q)
-      || p.cuit?.toLowerCase().includes(q)
-      || p.email?.toLowerCase().includes(q)
-      || p.contacto_nombre?.toLowerCase().includes(q)
+    return c.nombre.toLowerCase().includes(q)
+      || c.descripcion?.toLowerCase().includes(q)
   })
 
   if (loading) {
@@ -158,13 +138,13 @@ export default function ProveedoresPage() {
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Proveedores</h2>
-          <p className="text-gray-500">Gestión de proveedores del proyecto</p>
+          <h2 className="text-3xl font-bold tracking-tight">Categorías</h2>
+          <p className="text-gray-500">Categorías de gastos del proyecto</p>
         </div>
-        {canCreateProv && (
+        {canCreateCat && (
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4 mr-2" />
-            Nuevo Proveedor
+            Nueva Categoría
           </Button>
         )}
       </div>
@@ -174,12 +154,12 @@ export default function ProveedoresPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Tag className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total</p>
-                <p className="text-2xl font-bold">{proveedores.length}</p>
+                <p className="text-2xl font-bold">{categorias.length}</p>
               </div>
             </div>
           </CardContent>
@@ -191,8 +171,8 @@ export default function ProveedoresPage() {
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Activos</p>
-                <p className="text-2xl font-bold">{proveedores.filter(p => p.activo).length}</p>
+                <p className="text-sm text-gray-500">Activas</p>
+                <p className="text-2xl font-bold">{categorias.filter(c => c.activo).length}</p>
               </div>
             </div>
           </CardContent>
@@ -204,8 +184,8 @@ export default function ProveedoresPage() {
                 <XCircle className="h-5 w-5 text-gray-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Inactivos</p>
-                <p className="text-2xl font-bold">{proveedores.filter(p => !p.activo).length}</p>
+                <p className="text-sm text-gray-500">Inactivas</p>
+                <p className="text-2xl font-bold">{categorias.filter(c => !c.activo).length}</p>
               </div>
             </div>
           </CardContent>
@@ -218,7 +198,7 @@ export default function ProveedoresPage() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Buscar por nombre, razón social, CUIT, email..."
+              placeholder="Buscar por nombre o descripción..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="pl-10"
@@ -230,8 +210,8 @@ export default function ProveedoresPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Proveedores</CardTitle>
-          <CardDescription>{filtered.length} proveedores encontrados</CardDescription>
+          <CardTitle>Lista de Categorías</CardTitle>
+          <CardDescription>{filtered.length} categorías encontradas</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -239,61 +219,48 @@ export default function ProveedoresPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nombre</TableHead>
-                  <TableHead>CUIT</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Descripción</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Creado</TableHead>
-                  {(canUpdateProv || canDeleteProv) && <TableHead className="text-right">Acciones</TableHead>}
+                  {(canUpdateCat || canDeleteCat) && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                      No hay proveedores para mostrar
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      No hay categorías para mostrar
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => (
-                    <TableRow key={p.id} className={!p.activo ? 'bg-gray-50 opacity-60' : ''}>
+                  filtered.map((c) => (
+                    <TableRow key={c.id} className={!c.activo ? 'bg-gray-50 opacity-60' : ''}>
+                      <TableCell className="font-medium">{c.nombre}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{c.descripcion || '-'}</TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{p.nombre}</p>
-                          {p.razon_social && (
-                            <p className="text-xs text-gray-500">{p.razon_social}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{p.cuit || '-'}</TableCell>
-                      <TableCell className="text-sm">{p.contacto_nombre || '-'}</TableCell>
-                      <TableCell className="text-sm">{p.telefono || '-'}</TableCell>
-                      <TableCell className="text-sm">{p.email || '-'}</TableCell>
-                      <TableCell>
-                        {p.activo ? (
+                        {c.activo ? (
                           <Badge variant="success" className="flex items-center gap-1 w-fit">
-                            <CheckCircle className="h-3 w-3" /> Activo
+                            <CheckCircle className="h-3 w-3" /> Activa
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-                            <XCircle className="h-3 w-3" /> Inactivo
+                            <XCircle className="h-3 w-3" /> Inactiva
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">{formatDate(p.created_at)}</TableCell>
-                      {(canUpdateProv || canDeleteProv) && (
+                      <TableCell className="text-sm text-gray-500">{formatDate(c.created_at)}</TableCell>
+                      {(canUpdateCat || canDeleteCat) && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            {canUpdateProv && (
-                              <Button variant="ghost" size="sm" onClick={() => openEdit(p)}>
+                            {canUpdateCat && (
+                              <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
                             )}
-                            {canDeleteProv && (
+                            {canDeleteCat && (
                               <Button
                                 variant="ghost" size="sm"
-                                onClick={() => handleDelete(p.id, p.nombre)}
+                                onClick={() => handleDelete(c.id, c.nombre)}
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -315,10 +282,10 @@ export default function ProveedoresPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold">
-                {editingId ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+                {editingId ? 'Editar Categoría' : 'Nueva Categoría'}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
@@ -333,65 +300,22 @@ export default function ProveedoresPage() {
                 <Input
                   value={formData.nombre}
                   onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
-                  placeholder="Nombre del proveedor"
+                  placeholder="Nombre de la categoría"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Razón Social</label>
+                <label className="text-sm font-medium mb-1 block">Descripción</label>
                 <Input
-                  value={formData.razon_social}
-                  onChange={(e) => setFormData(prev => ({ ...prev, razon_social: e.target.value }))}
-                  placeholder="Razón social"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-1 block">CUIT</label>
-                  <Input
-                    value={formData.cuit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cuit: e.target.value }))}
-                    placeholder="XX-XXXXXXXX-X"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Teléfono</label>
-                  <Input
-                    value={formData.telefono}
-                    onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
-                    placeholder="Teléfono"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Email</label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="email@ejemplo.com"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Dirección</label>
-                <Input
-                  value={formData.direccion}
-                  onChange={(e) => setFormData(prev => ({ ...prev, direccion: e.target.value }))}
-                  placeholder="Dirección"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Nombre de Contacto</label>
-                <Input
-                  value={formData.contacto_nombre}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contacto_nombre: e.target.value }))}
-                  placeholder="Persona de contacto"
+                  value={formData.descripcion}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descripcion: e.target.value }))}
+                  placeholder="Descripción opcional"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-3 p-6 border-t">
               <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Proveedor'}
+                {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Categoría'}
               </Button>
             </div>
           </div>

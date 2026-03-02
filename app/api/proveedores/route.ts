@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { nombre } = await request.json()
+    const { nombre, razon_social, cuit, direccion, telefono, email, contacto_nombre } = await request.json()
 
     if (!nombre?.trim()) {
       return NextResponse.json(
@@ -51,6 +51,12 @@ export async function POST(request: Request) {
     const nuevoProveedor = await prisma.proveedores.create({
       data: {
         nombre: nombre.trim(),
+        razon_social: razon_social?.trim() || null,
+        cuit: cuit?.trim() || null,
+        direccion: direccion?.trim() || null,
+        telefono: telefono?.trim() || null,
+        email: email?.trim() || null,
+        contacto_nombre: contacto_nombre?.trim() || null,
         activo: true,
         created_at: new Date(),
         updated_at: new Date()
