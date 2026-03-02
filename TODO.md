@@ -73,17 +73,16 @@
 - [ ] Reporte de tendencias y proyecciones
 - [ ] Exportar a Excel
 
-### Configuración - ABM de maestros (páginas dedicadas)
-- [ ] CRUD Proveedores (página `proveedores/` es stub, API GET/POST existe)
-- [ ] CRUD Personas (página `personas/` es stub, API GET/POST existe)
-- [ ] CRUD Categorías (API GET/POST existe, falta página dedicada)
-- [ ] CRUD Métodos de Pago (API GET/POST existe, falta página dedicada)
+### Configuración - ABM de maestros
+- [x] CRUD Proveedores (API completa GET/POST/PUT/DELETE + página con tabla, búsqueda, modal, stats)
+- [x] CRUD Personas (API completa GET/POST/PUT/DELETE + página con tabla, búsqueda, modal, stats)
+- [x] CRUD Categorías (API completa GET/POST/PUT/DELETE + página con tabla, búsqueda, modal, stats)
+- [x] CRUD Métodos de Pago (API completa GET/POST/PUT/DELETE + página con tabla, búsqueda, modal, stats)
 - [ ] Página de configuración general (actualmente stub "en desarrollo")
 
 ### Mejoras
 - [ ] Loading states mejorados
 - [ ] Error handling mejorado
-- [ ] Completar API de maestros con PUT/DELETE
 
 ---
 
