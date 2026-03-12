@@ -12,6 +12,8 @@ import {
   Settings,
   Users,
   Package,
+  Tag,
+  CreditCard,
   ChevronRight,
   ChevronDown,
   Menu,
@@ -21,6 +23,7 @@ import {
   User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ChatGastos from '@/components/ChatGastos'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -38,6 +41,8 @@ const navigation = [
   },
   { name: 'Proveedores', href: '/dashboard/proveedores', icon: Package },
   { name: 'Personas', href: '/dashboard/personas', icon: Users },
+  { name: 'Categorías', href: '/dashboard/categorias', icon: Tag },
+  { name: 'Métodos de Pago', href: '/dashboard/metodos-pago', icon: CreditCard },
   {
     name: 'Usuarios',
     href: '/dashboard/usuarios',
@@ -105,6 +110,8 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      <ChatGastos />
     </div>
   )
 }
