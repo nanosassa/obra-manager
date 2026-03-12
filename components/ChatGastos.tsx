@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { MessageCircle, X, Send, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Message {
@@ -13,12 +13,35 @@ const WELCOME_MESSAGE = '¡Hola! Soy el asistente de gastos de la obra 🏗️. 
 
 export default function ChatGastos() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem('chat-gastos-messages')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('chat-gastos-session')
+  })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chat-gastos-messages', JSON.stringify(messages))
+    }
+  }, [messages])
+
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('chat-gastos-session', sessionId)
+    }
+  }, [sessionId])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -29,19 +52,25 @@ export default function ChatGastos() {
   }, [messages, isLoading, scrollToBottom])
 
   const openChat = () => {
-    const newSessionId = crypto.randomUUID()
-    setSessionId(newSessionId)
-    setMessages([{ role: 'assistant', content: WELCOME_MESSAGE }])
-    setInput('')
+    if (!sessionId) {
+      const newSessionId = crypto.randomUUID()
+      setSessionId(newSessionId)
+      setMessages([{ role: 'assistant', content: WELCOME_MESSAGE }])
+    }
     setIsOpen(true)
     setTimeout(() => inputRef.current?.focus(), 100)
   }
 
   const closeChat = () => {
     setIsOpen(false)
-    setMessages([])
-    setSessionId(null)
-    setInput('')
+  }
+
+  const clearChat = () => {
+    const newSessionId = crypto.randomUUID()
+    setSessionId(newSessionId)
+    setMessages([{ role: 'assistant', content: WELCOME_MESSAGE }])
+    localStorage.removeItem('chat-gastos-messages')
+    localStorage.removeItem('chat-gastos-session')
   }
 
   const sendMessage = async () => {
@@ -93,12 +122,21 @@ export default function ChatGastos() {
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold text-sm">Asistente de Gastos</span>
             </div>
-            <button
-              onClick={closeChat}
-              className="p-1 rounded-lg hover:bg-white/20 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={clearChat}
+                title="Limpiar historial"
+                className="p-1 rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={closeChat}
+                className="p-1 rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
