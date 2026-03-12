@@ -23,6 +23,7 @@ import {
   User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import ChatGastos from '@/components/ChatGastos'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -109,6 +110,8 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      <ChatGastos />
     </div>
   )
 }
