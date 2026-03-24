@@ -117,7 +117,7 @@ export default function ChatGastos() {
       {isOpen && (
         <div className="fixed bottom-20 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-8rem)] flex flex-col bg-white rounded-xl shadow-2xl border border-gray-200/60 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white flex-shrink-0">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold text-sm">Asistente de Gastos</span>
@@ -153,7 +153,7 @@ export default function ChatGastos() {
                   className={cn(
                     'max-w-[80%] px-3 py-2 rounded-xl text-sm whitespace-pre-wrap',
                     msg.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-sm'
+                      ? 'bg-red-600 text-white rounded-br-sm'
                       : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
                   )}
                 >
@@ -184,12 +184,12 @@ export default function ChatGastos() {
               onKeyDown={handleKeyDown}
               placeholder="Escribí tu consulta..."
               disabled={isLoading}
-              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 disabled:opacity-50 transition-all"
+              className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 disabled:opacity-50 transition-all"
             />
             <button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all"
+              className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -204,7 +204,7 @@ export default function ChatGastos() {
           'fixed bottom-4 right-4 z-50 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200',
           isOpen
             ? 'bg-gray-600 hover:bg-gray-700 text-white'
-            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+            : 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800'
         )}
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
